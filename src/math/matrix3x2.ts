@@ -71,12 +71,20 @@ export const Matrix3x2 = {
         ];
     },
 
+    translateScale(s: number, t: Vector2): Matrix3x2 {
+        return [
+            s, 0,
+            0, s,
+            t.x * s, t.y * s
+        ]
+    },
+
     transform(scale: number, angle: number, t: Vector2): Matrix3x2 {
         const rotation = this.rotate(angle);
         const scaling = this.scale(scale);
         const translation = this.translate(t);
         const scaledRotation = this.multiplyMatrix(scaling, rotation);
-        return this.multiplyMatrix(translation, scaledRotation);
+        return this.multiplyMatrix(scaledRotation, translation);
     },
 
     multiplyMatrix(m: Matrix3x2, n: Matrix3x2): Matrix3x2 {

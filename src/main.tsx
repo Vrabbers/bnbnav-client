@@ -1,16 +1,18 @@
 import "./index.css"
 import App from './App.tsx'
 import { render } from "preact"
-import { MapCanvas } from "./map/mapCanvas.ts";
+import { MapRenderer } from "./map-renderer/map-renderer.ts";
 
 let domMap = document.getElementById("decapitatedCanvas");
 if (!(domMap instanceof HTMLCanvasElement)) {
-    throw "Couldn't find map canvas!";
+    throw new Error("Couldn't find map canvas!");
 }
-let map = new MapCanvas(domMap);
+
+let map = new MapRenderer(domMap);
 console.log(map);
 
 render(<App/>, document.getElementById("root")!);
 
 let x = await fetch("https://bnbnav.aircs.racing/api/data");
-console.log(await x.json());
+const data = await x.json();
+console.log(data);
