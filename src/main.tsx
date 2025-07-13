@@ -11,3 +11,6 @@ let map = new MapCanvas(domMap);
 console.log(map);
 
 render(<App/>, document.getElementById("root")!);
+
+let x = await fetch("https://bnbnav.aircs.racing/api/data");
+console.log(await x.json());

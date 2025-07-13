@@ -1,16 +1,20 @@
-import { clamp } from "../math/math";
-import { Vec2, vec2 } from "../math/vec2";
+import { MathH } from "../math/math";
+import { Matrix3x2 } from "../math/matrix3x2";
+import { Vector2, vec2 } from "../math/vector2";
 
 export class MapCanvas {
     #canvas: HTMLCanvasElement;
     #panning: boolean = false;
-    #panFirstMouse: Vec2 = vec2(0, 0);
-    #panFirstPan: Vec2 = vec2(0, 0);
+    #panFirstMouse: Vector2 = vec2(0, 0);
+    #panFirstPan: Vector2 = vec2(0, 0);
     #width: number;
     #height: number;
-    #pan: Vec2 = vec2(0, 0);
+    #pan: Vector2 = vec2(0, 0);
     #resObv!: ResizeObserver;
-    #zoom: number = 1;
+    #scale: number = 1;
+    #rotate: number = 0;
+    #transform: Matrix3x2 = Matrix3x2.identity();
+    #inverseTransform: Matrix3x2 = Matrix3x2.identity();
 
     constructor(canvas: HTMLCanvasElement) {
         this.#canvas = canvas;
@@ -18,6 +22,19 @@ export class MapCanvas {
         this.#height = canvas.clientHeight;
         this.#setupEvents();
         this.#resizeCanvas();
+    }
+
+    #updateMatrices() {
+        this.#transform = Matrix3x2.transform(this.#scale, this.#rotate, this.#pan);
+        this.#inverseTransform = Matrix3x2.inverse(this.#transform);
+    }
+
+    #toScreen(point: Vector2) {
+        return Matrix3x2.multiplyVector(this.#transform, point);
+    }
+
+    #toWorld(point: Vector2) {
+        return Matrix3x2.multiplyVector(this.#inverseTransform, point);
     }
 
     #renderCanvas() {
@@ -29,18 +46,33 @@ export class MapCanvas {
         ctx.resetTransform();
     }
 
+    #transformStack: DOMMatrix[] = [];
+    #pushTransform(ctx: CanvasRenderingContext2D) {
+        this.#transformStack.push(ctx.getTransform());
+    }
+    #popTransform(ctx: CanvasRenderingContext2D) {
+        ctx.setTransform(this.#transformStack.pop());
+    }
+
     #renderMap(ctx: CanvasRenderingContext2D) {
         ctx.clearRect(0, 0, this.#width, this.#height);
-        ctx.fillStyle = `hsl(${Math.random() * 360}, 100%, 50%)`;
-        ctx.lineWidth = this.#zoom;
-        ctx.fillRect(this.#pan.x, this.#pan.y, 10 * this.#zoom, 10 * this.#zoom);
         ctx.beginPath();
         ctx.moveTo(0, 0);
         ctx.lineTo(this.#width, this.#height);
-        ctx.rect(1, 1, this.#width - 2, this.#height - 2);
+        ctx.rect(0, 0, this.#width - 1, this.#height - 1);
         ctx.stroke();
-        ctx.fillStyle = 'black';
-        ctx.fillText(`${this.#pan.x} ${this.#pan.y}\n${this.#zoom}`, this.#pan.x, this.#pan.y);
+        this.#pushTransform(ctx);
+        ctx.transform(...this.#transform);
+        for (let i = -50; i <= 50; i++) {
+            for (let j = -50; j < 50; j++) {
+                const angle = Math.atan2(j, i) * 180 / Math.PI + 360;
+                ctx.fillStyle = `hsl(${angle}, 100%, 50%)`;
+                ctx.beginPath();
+                ctx.ellipse(100 * i, 100 * j, 10, 10, 0, 0, 2 * Math.PI);
+                ctx.fill();
+            }
+        }
+        this.#popTransform(ctx)
     }
 
     queueRerender() {
@@ -74,27 +106,37 @@ export class MapCanvas {
         }
     }
 
-    #mouseUp(_evt: MouseEvent) {
+    #mouseUp(evt: MouseEvent) {
         this.#panning = false;
+        const toWorld = this.#toWorld(vec2(evt.x, evt.y));
+        const toScreen = this.#toScreen(toWorld);
+        console.log(`${evt.x},${evt.y} Clicked position ${toWorld} in world space (which is ${toScreen} back to screen space)`);
     }
 
     #mouseMove(evt: MouseEvent) {
         if (this.#panning) {
-            const delta = Vec2.sub(vec2(evt.x, evt.y), this.#panFirstMouse);
-            const newPan = Vec2.add(this.#panFirstPan, delta);
+            const delta = Vector2.sub(vec2(evt.x, evt.y), this.#panFirstMouse);
+            const newPan = Vector2.add(this.#panFirstPan, delta);
             this.#pan = newPan;
+            this.#updateMatrices();
             this.queueRerender();
         }
     }
 
     #wheel(evt: WheelEvent) {
         evt.preventDefault();
-        
-        let zoom = this.#zoom;
+
+        let zoom = this.#scale;
         zoom += -evt.deltaY * zoom / (evt.ctrlKey ? 100 : 1000);
-        zoom = clamp(zoom, 0.1, 20);
-        if (zoom !== this.#zoom) {
-            this.#zoom = zoom;
+        zoom = MathH.clamp(zoom, 0.1, 20);
+        if (zoom !== this.#scale) {
+            //const previousPosition = this.#toWorld(vec2(evt.x, evt.y));
+            this.#scale = zoom;
+            this.#updateMatrices();
+            //const incorrectPosition = this.#toWorld(vec2(evt.x, evt.y));
+            //const error = Vector2.sub(incorrectPosition, previousPosition);
+            //this.#pan = Vector2.sub(this.#pan, error);
+            //this.#updateMatrices();
             this.queueRerender();
         }
     }
