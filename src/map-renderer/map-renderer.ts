@@ -1,3 +1,4 @@
+import type { MapData } from "../map-data/json-types";
 import { MapController } from "./map-controller";
 import { MapState } from "./map-state";
 
@@ -5,12 +6,13 @@ export class MapRenderer {
     #canvas: HTMLCanvasElement;
     #mapState: MapState;
     #mapControl: MapController;
-
+    #data: MapData;
     #width: number;
     #height: number;
     #resObv: ResizeObserver;
 
-    constructor(canvas: HTMLCanvasElement) {
+    constructor(canvas: HTMLCanvasElement, data: MapData) {
+        this.#data = data;
         this.#canvas = canvas;
         this.#width = canvas.clientWidth;
         this.#height = canvas.clientHeight;
@@ -23,23 +25,17 @@ export class MapRenderer {
 
     #renderMap(ctx: CanvasRenderingContext2D) {
         ctx.lineWidth = 10;
-        ctx.beginPath();
-        ctx.moveTo(0, 0);
-        ctx.lineTo(this.#width, this.#height);
-        ctx.rect(0, 0, this.#width - 1, this.#height - 1);
-        ctx.stroke();
+        ctx.strokeRect(0, 0, this.#width - 1, this.#height - 1);
 
         ctx.save();
         ctx.transform(...this.#mapState.transform);
-
-        for (let i = -50; i <= 50; i++) {
-            for (let j = -50; j < 50; j++) {
-                const angle = Math.atan2(j, i) * 180 / Math.PI + 360;
-                ctx.fillStyle = `hsl(${angle}, 100%, 50%)`;
-                ctx.beginPath();
-                ctx.ellipse(100 * i, 100 * j, 10, 10, 0, 0, 2 * Math.PI);
-                ctx.fill();
-            }
+        for (const [_, edge] of this.#data.edges) {
+            const node1 = this.#data.nodes.get(edge.node1)!;
+            const node2 = this.#data.nodes.get(edge.node2)!;
+            ctx.beginPath()
+            ctx.moveTo(node1.x, node1.z);
+            ctx.lineTo(node2.x, node2.z);
+            ctx.stroke();
         }
 
         ctx.restore();
