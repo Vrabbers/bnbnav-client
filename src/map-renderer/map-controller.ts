@@ -31,11 +31,8 @@ export class MapController {
         }
     }
 
-    #mouseUp(evt: MouseEvent) {
+    #mouseUp(_evt: MouseEvent) {
         this.#panning = false;
-        const toWorld = this.#state.toWorld(vec2(evt.x, evt.y));
-        const toScreen = this.#state.toWorld(toWorld);
-        console.log(`${evt.x},${evt.y} Clicked position ${toWorld} in world space (which is ${toScreen} back to screen space)`);
     }
 
     #mouseMove(evt: MouseEvent) {

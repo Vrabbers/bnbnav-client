@@ -5,7 +5,6 @@ import { vec2, Vector2 } from "../math/vector2";
 export class MapState {
     pan: Vector2 = vec2(0, 0);
     scale: number = 1;
-    rotate: number = 0;
 
     transform: Matrix3x2 = Matrix3x2.identity();
     inverseTransform: Matrix3x2 = Matrix3x2.identity();

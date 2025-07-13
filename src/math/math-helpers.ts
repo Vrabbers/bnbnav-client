@@ -6,4 +6,8 @@ export const MathH = {
             return min;
         return x;
     },
+
+    mod(n: number, d: number): number {
+        return ((n % d) + d) % d;
+    }
 };
