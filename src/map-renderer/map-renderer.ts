@@ -25,6 +25,13 @@ export class MapRenderer {
     }
 
     #resizeGrid() {
+        const log2Scale = Math.ceil(Math.log2(this.#state.scale));
+        const newSideLength = 256 * (2 ** (-log2Scale));
+        if (newSideLength != this.#gridSideLength) {
+            this.#gridSideLength = newSideLength;
+            console.log(newSideLength);
+        }
+
         const xBins = Math.ceil(this.#width / this.#state.scale / this.#gridSideLength) * 2;
         const yBins = Math.ceil(this.#height / this.#state.scale / this.#gridSideLength) * 2;
         if (this.#grid.length >= yBins && this.#grid[0].length >= xBins)
@@ -61,13 +68,15 @@ export class MapRenderer {
         const yDiff = endY - startY;
         const firstX = Math.floor(startIndex.x) * this.#gridSideLength;
         const firstY = Math.floor(startIndex.y) * this.#gridSideLength;
-        ctx.font = "100px sans-serif";
+        ctx.font = "48px sans-serif";
         const modX = MathH.mod(startX, gridWidth);
         let y = MathH.mod(startY, gridHeight);
         for (let j = 0; j < yDiff; j++) {
             let x = modX;
             for (let i = 0; i < xDiff; i++) {
-                ctx.strokeRect(firstX + i * this.#gridSideLength, firstY + j * this.#gridSideLength, this.#gridSideLength, this.#gridSideLength);
+                ctx.fillStyle = `rgb(${Math.floor(x * 255 / gridWidth)} ${Math.floor(y * 255 / gridWidth)} 0)`;
+                ctx.fillRect(firstX + i * this.#gridSideLength, firstY + j * this.#gridSideLength, this.#gridSideLength + 1, this.#gridSideLength + 1);
+                ctx.fillStyle = "#fff";
                 ctx.fillText(this.#grid[y][x], firstX + (i) * this.#gridSideLength, firstY + (j + 1) * this.#gridSideLength);
                 x = (x + 1) % gridWidth;
             }

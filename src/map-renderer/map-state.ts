@@ -27,7 +27,7 @@ export class MapState {
     }
 
     zoomAt(point: Vector2, newScale: number) {
-        const clampedScale = MathH.clamp(newScale, 0.1, 20);
+        const clampedScale = MathH.clamp(newScale, 0.125, 16);
 
         if (clampedScale === this.scale)
             return;
