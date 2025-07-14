@@ -12,24 +12,24 @@ export class Vector2 {
         this.y = y;
     }
 
-    static add(a: Vector2, b: Vector2) {
-        return vec2(a.x + b.x, a.y + b.y);
+    add(other: Vector2): Vector2 {
+        return vec2(this.x + other.x, this.y + other.y);
     }
 
-    static sub(a: Vector2, b: Vector2): Vector2 {
-        return vec2(a.x - b.x, a.y - b.y);
+    sub(other: Vector2): Vector2 {
+        return vec2(this.x - other.x, this.y - other.y);
     }
 
-    static dot(a: Vector2, b: Vector2): number {
-        return a.x * b.x + a.y * b.y;
+    dot(other: Vector2): number {
+        return this.x * other.x + this.y * other.y;
     }
 
-    static mul(a: Vector2, scalar: number): Vector2 {
-        return vec2(a.x * scalar, a.y * scalar);
+    mul(scalar: number): Vector2 {
+        return vec2(this.x * scalar, this.y * scalar);
     }
 
-    static div(a: Vector2, scalar: number): Vector2 {
-        return vec2(a.x / scalar, a.y / scalar);
+    div(scalar: number): Vector2 {
+        return vec2(this.x / scalar, this.y / scalar);
     }
 
     static distance(a: Vector2, b: Vector2): number {
@@ -57,7 +57,7 @@ export class Vector2 {
         if (len === 0) {
             throw new RangeError("Cannot normalize a zero vector");
         }
-        return Vector2.div(this, len);
+        return this.div(len);
     }
 
     negate(): Vector2 {

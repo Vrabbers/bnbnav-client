@@ -1,7 +1,13 @@
 import { MathH } from "../math/math-helpers";
-import { vec2, Vector2 } from "../math/vector2";
+import { vec2 } from "../math/vector2";
 import { MapController } from "./map-controller";
 import { MapState } from "./map-state";
+
+interface GridBin {
+    //image: ImageBitmap | null,
+    x: number | null,
+    z: number | null,
+}
 
 export class MapRenderer {
     #canvas: HTMLCanvasElement;
@@ -10,8 +16,8 @@ export class MapRenderer {
     #width: number;
     #height: number;
     #resObv: ResizeObserver;
-    #grid: string[][] = [[]];
-    #gridSideLength = 256;
+    #grid: GridBin[][] = [[]];
+    #gridSideLength = 500;
 
     constructor(canvas: HTMLCanvasElement) {
         this.#canvas = canvas;
@@ -25,26 +31,30 @@ export class MapRenderer {
     }
 
     #resizeGrid() {
-        const log2Scale = Math.ceil(Math.log2(this.#state.scale));
-        const newSideLength = 256 * (2 ** (-log2Scale));
-        if (newSideLength != this.#gridSideLength) {
-            this.#gridSideLength = newSideLength;
-            console.log(newSideLength);
-        }
+        // const log2Scale = Math.ceil(Math.log2(this.#state.scale));
+        // const newSideLength = 256 * (2 ** (-log2Scale));
+        // if (newSideLength != this.#gridSideLength) {
+        //     this.#gridSideLength = newSideLength;
+        // }
 
-        const xBins = Math.ceil(this.#width / this.#state.scale / this.#gridSideLength) * 2;
-        const yBins = Math.ceil(this.#height / this.#state.scale / this.#gridSideLength) * 2;
-        if (this.#grid.length >= yBins && this.#grid[0].length >= xBins)
+        const xb = Math.ceil(this.#width / this.#state.scale / this.#gridSideLength);
+        const yb = Math.ceil(this.#height / this.#state.scale / this.#gridSideLength);
+
+        if (this.#grid.length >= xb + 1 && this.#grid[0].length >= yb + 1)
             return;
-        const a = new Array(yBins);
+        const xBins = xb * 4;
+        const yBins = yb * 4;
+        const a: GridBin[][] = new Array(yBins);
         for (let y = 0; y < yBins; y++) {
             a[y] = new Array(xBins);
             for (let x = 0; x < xBins; x++) {
-                a[y][x] = `[${x};${y}]`;
+                a[y][x] = {
+                    x: null,
+                    z: null,
+                };
             }
         }
         this.#grid = a;
-        console.table(a);
     }
 
     #renderMap(ctx: CanvasRenderingContext2D) {
@@ -56,8 +66,8 @@ export class MapRenderer {
 
         const topRight = this.#state.toWorld(vec2(0, 0));
         const bottomLeft = this.#state.toWorld(vec2(this.#width, this.#height));
-        const startIndex = Vector2.div(topRight, this.#gridSideLength);
-        const endIndex = Vector2.div(bottomLeft, this.#gridSideLength);
+        const startIndex = topRight.div(this.#gridSideLength);
+        const endIndex = bottomLeft.div(this.#gridSideLength);
         const gridWidth = this.#grid[0].length;
         const gridHeight = this.#grid.length;
         const startX = Math.floor(startIndex.x);
@@ -68,16 +78,44 @@ export class MapRenderer {
         const yDiff = endY - startY;
         const firstX = Math.floor(startIndex.x) * this.#gridSideLength;
         const firstY = Math.floor(startIndex.y) * this.#gridSideLength;
-        ctx.font = "48px sans-serif";
         const modX = MathH.mod(startX, gridWidth);
+
         let y = MathH.mod(startY, gridHeight);
+        const correctedSideLength = this.#gridSideLength + 1 / this.#state.scale;
+        ctx.textBaseline = "top";
         for (let j = 0; j < yDiff; j++) {
             let x = modX;
             for (let i = 0; i < xDiff; i++) {
+                const entry = this.#grid[y][x];
+                const xIndex = startX + i;
+                const yIndex = startY + j;
+                if (entry.x !== xIndex || entry.z !== yIndex) {
+                    entry.x = xIndex;
+                    entry.z = yIndex;
+                    // entry.image?.close();
+                    // entry.image = null;
+                    // fetch(`http://localhost:8080/http://terrain.aircs.racing/maps/world/tiles/1/x${xIndex}/z${yIndex}.png`).then(async (resp) => {
+                    //     if (entry.x !== xIndex || entry.z !== yIndex)
+                    //         return;
+
+                    //     const blob = await resp.blob();
+
+                    //     if (entry.x !== xIndex || entry.z !== yIndex)
+                    //         return;
+
+                    //     entry.image = await window.createImageBitmap(blob);
+
+                    //     this.requestRender();
+                    // });
+                }
+                // if (entry.image !== null) {
+                //     ctx.globalAlpha = 0.5;
+                //     ctx.drawImage(entry.image, 0, 0, 501, 501, firstX + i * this.#gridSideLength, firstY + j * this.#gridSideLength, correctedSideLength, correctedSideLength);
+                // }
                 ctx.fillStyle = `rgb(${Math.floor(x * 255 / gridWidth)} ${Math.floor(y * 255 / gridWidth)} 0)`;
-                ctx.fillRect(firstX + i * this.#gridSideLength, firstY + j * this.#gridSideLength, this.#gridSideLength + 1, this.#gridSideLength + 1);
-                ctx.fillStyle = "#fff";
-                ctx.fillText(this.#grid[y][x], firstX + (i) * this.#gridSideLength, firstY + (j + 1) * this.#gridSideLength);
+                ctx.fillRect(firstX + i * this.#gridSideLength, firstY + j * this.#gridSideLength, correctedSideLength, correctedSideLength);
+                ctx.fillStyle = "white";
+                ctx.fillText(`[${entry.x * this.#gridSideLength},${entry.z * this.#gridSideLength}]`, firstX + i * this.#gridSideLength, firstY + j * this.#gridSideLength)
                 x = (x + 1) % gridWidth;
             }
             y = (y + 1) % gridHeight;

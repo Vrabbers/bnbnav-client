@@ -38,9 +38,9 @@ export class MapState {
         this.updateMatrices();
         
         const worldPosAfter = this.toWorld(point);
-        const error = Vector2.sub(worldPosAfter, worldPosBefore);
+        const error = worldPosAfter.sub(worldPosBefore);
         
-        this.pan = Vector2.add(this.pan, error);
+        this.pan = this.pan.add(error);
         this.updateMatrices();
     }
 

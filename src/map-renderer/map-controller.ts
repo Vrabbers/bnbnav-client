@@ -32,13 +32,15 @@ export class MapController {
     }
 
     #mouseUp(_evt: MouseEvent) {
-        this.#panning = false;
+        if (this.#panning) {
+            this.#panning = false;
+        }
     }
 
     #mouseMove(evt: MouseEvent) {
         if (this.#panning) {
-            const delta = Vector2.div(Vector2.sub(vec2(evt.x, evt.y), this.#panFirstMouse), this.#state.scale);
-            this.#state.pan = Vector2.add(this.#panFirstPan, delta);
+            const delta = (vec2(evt.x, evt.y).sub(this.#panFirstMouse)).div(this.#state.scale);
+            this.#state.pan = this.#panFirstPan.add(delta);
             this.#state.updateMatrices();
             this.#update();
         }
