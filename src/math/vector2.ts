@@ -67,4 +67,8 @@ export class Vector2 {
     toString(): string {
         return `vec2(${this.x}, ${this.y})`;
     }
+
+    map(fn: (x: number) => number): Vector2 {
+        return vec2(fn(this.x), fn(this.y));
+    }
 }

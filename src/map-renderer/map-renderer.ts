@@ -16,8 +16,10 @@ export class MapRenderer {
     #width: number;
     #height: number;
     #resObv: ResizeObserver;
-    #grid: GridBin[][] = [[]];
-    #gridSideLength = 500;
+    #grid: GridBin[][] = [];
+    #gridSideLength = 256;
+    #gridWidth: number = 0;
+    #gridHeight: number = 0;
 
     constructor(canvas: HTMLCanvasElement) {
         this.#canvas = canvas;
@@ -31,22 +33,23 @@ export class MapRenderer {
     }
 
     #resizeGrid() {
-        // const log2Scale = Math.ceil(Math.log2(this.#state.scale));
-        // const newSideLength = 256 * (2 ** (-log2Scale));
-        // if (newSideLength != this.#gridSideLength) {
-        //     this.#gridSideLength = newSideLength;
-        // }
+        const log2Scale = Math.ceil(Math.log2(this.#state.scale));
+        const newSideLength = 256 * (2 ** (-log2Scale));
+        if (newSideLength != this.#gridSideLength) {
+            this.#gridSideLength = newSideLength;
+        }
 
         const xb = Math.ceil(this.#width / this.#state.scale / this.#gridSideLength);
         const yb = Math.ceil(this.#height / this.#state.scale / this.#gridSideLength);
 
         if (this.#grid.length >= xb + 1 && this.#grid[0].length >= yb + 1)
             return;
+
         const xBins = xb * 4;
         const yBins = yb * 4;
-        const a: GridBin[][] = new Array(yBins);
+        const a: GridBin[][] = [];
         for (let y = 0; y < yBins; y++) {
-            a[y] = new Array(xBins);
+            a[y] = [];
             for (let x = 0; x < xBins; x++) {
                 a[y][x] = {
                     x: null,
@@ -55,40 +58,36 @@ export class MapRenderer {
             }
         }
         this.#grid = a;
+        this.#gridHeight = yBins;
+        this.#gridWidth = xBins;
     }
 
-    #renderMap(ctx: CanvasRenderingContext2D) {
-        ctx.lineWidth = 1;
+    #renderMap(ctx: CanvasRenderingContext2D, dt: number) {
+        ctx.lineWidth = 5;
         ctx.strokeRect(0, 0, this.#width - 1, this.#height - 1);
-
         ctx.save();
+        ctx.textBaseline = "top";
+        ctx.font = `${(16 / this.#state.scale)}px sans-serif`; 
+        console.log(ctx.font);
         ctx.transform(...this.#state.transform);
 
         const topRight = this.#state.toWorld(vec2(0, 0));
         const bottomLeft = this.#state.toWorld(vec2(this.#width, this.#height));
-        const startIndex = topRight.div(this.#gridSideLength);
-        const endIndex = bottomLeft.div(this.#gridSideLength);
-        const gridWidth = this.#grid[0].length;
-        const gridHeight = this.#grid.length;
-        const startX = Math.floor(startIndex.x);
-        const startY = Math.floor(startIndex.y);
-        const endX = Math.ceil(endIndex.x);
-        const endY = Math.ceil(endIndex.y);
-        const xDiff = endX - startX;
-        const yDiff = endY - startY;
-        const firstX = Math.floor(startIndex.x) * this.#gridSideLength;
-        const firstY = Math.floor(startIndex.y) * this.#gridSideLength;
-        const modX = MathH.mod(startX, gridWidth);
+        const start = topRight.div(this.#gridSideLength).map(Math.floor);
+        const end = bottomLeft.div(this.#gridSideLength).map(Math.ceil);
+        const diff = end.sub(start);
+        const first = start.mul(this.#gridSideLength);
 
-        let y = MathH.mod(startY, gridHeight);
+        const modX = MathH.mod(start.x, this.#gridWidth);
+
         const correctedSideLength = this.#gridSideLength + 1 / this.#state.scale;
-        ctx.textBaseline = "top";
-        for (let j = 0; j < yDiff; j++) {
+        let y = MathH.mod(start.y, this.#gridHeight);
+        for (let j = 0; j < diff.y; j++) {
             let x = modX;
-            for (let i = 0; i < xDiff; i++) {
+            for (let i = 0; i < diff.x; i++) {
                 const entry = this.#grid[y][x];
-                const xIndex = startX + i;
-                const yIndex = startY + j;
+                const xIndex = start.x + i;
+                const yIndex = start.y + j;
                 if (entry.x !== xIndex || entry.z !== yIndex) {
                     entry.x = xIndex;
                     entry.z = yIndex;
@@ -112,16 +111,18 @@ export class MapRenderer {
                 //     ctx.globalAlpha = 0.5;
                 //     ctx.drawImage(entry.image, 0, 0, 501, 501, firstX + i * this.#gridSideLength, firstY + j * this.#gridSideLength, correctedSideLength, correctedSideLength);
                 // }
-                ctx.fillStyle = `rgb(${Math.floor(x * 255 / gridWidth)} ${Math.floor(y * 255 / gridWidth)} 0)`;
-                ctx.fillRect(firstX + i * this.#gridSideLength, firstY + j * this.#gridSideLength, correctedSideLength, correctedSideLength);
+                ctx.fillStyle = `rgb(${Math.floor(x * 255 / this.#gridWidth)} ${Math.floor(y * 255 / this.#gridHeight)} 127)`;
+                ctx.fillRect(first.x + i * this.#gridSideLength, first.y + j * this.#gridSideLength, correctedSideLength, correctedSideLength);
                 ctx.fillStyle = "white";
-                ctx.fillText(`[${entry.x * this.#gridSideLength},${entry.z * this.#gridSideLength}]`, firstX + i * this.#gridSideLength, firstY + j * this.#gridSideLength)
-                x = (x + 1) % gridWidth;
+                ctx.fillText(`[${entry.x * this.#gridSideLength},${entry.z * this.#gridSideLength}]`, first.x + i * this.#gridSideLength, first.y + j * this.#gridSideLength)
+                x = (x + 1) % this.#gridWidth;
             }
-            y = (y + 1) % gridHeight;
+            y = (y + 1) % this.#gridHeight;
         }
 
         ctx.restore();
+        ctx.fillText(`dt: ${dt} ms / fps: ${1000 / (dt)}`, 24, 24);
+        ctx.fillText(`${this.#state.pan} / ${this.#state.scale}`, 24, 48);
     }
 
     #resizeCanvas() {
@@ -131,17 +132,18 @@ export class MapRenderer {
         this.#canvas.height = h * window.devicePixelRatio;
         this.requestRender();
     }
-
-    #renderCanvas() {
+    #lastTime: number = NaN;
+    #renderCanvas(time: number) {
         const ctx = this.#canvas.getContext("2d")!;
         ctx.clearRect(0, 0, this.#canvas.width, this.#canvas.height);
         ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
         this.#width = this.#canvas.width / window.devicePixelRatio;
         this.#height = this.#canvas.height / window.devicePixelRatio;
 
-        this.#renderMap(ctx);
+        this.#renderMap(ctx, time - this.#lastTime);
 
         ctx.resetTransform();
+        this.#lastTime = time;
     }
 
     requestRender() {
