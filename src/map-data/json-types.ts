@@ -1,27 +1,27 @@
-export type JsonAnnotation = any;
-export type JsonLandmark = any;
+export type JsonAnnotation = unknown;
+export type JsonLandmark = unknown;
 export interface JsonNode {
-    x: number,
-    y: number,
-    z: number,
-    world: string,
+    x: number;
+    y: number;
+    z: number;
+    world: string;
 }
 export interface JsonRoad {
-    name: string,
-    type: string,
+    name: string;
+    type: string;
 }
 export interface JsonEdge {
-    road: string,
-    node1: string,
-    node2: string
+    road: string;
+    node1: string;
+    node2: string;
 }
 
 export interface JsonMapData {
-    annotations: {[index: string]: JsonAnnotation},
-    landmarks: {[index: string]: JsonLandmark},
-    nodes: {[index: string]: JsonNode},
-    roads: {[index: string]: JsonRoad},
-    edges: {[index: string]: JsonEdge}
+    annotations: Record<string, JsonAnnotation>;
+    landmarks: Record<string, JsonLandmark>;
+    nodes: Record<string, JsonNode>;
+    roads: Record<string, JsonRoad>;
+    edges: Record<string, JsonEdge>;
 }
 
 export interface MapData {
@@ -39,5 +39,5 @@ export function collectMapData(json: JsonMapData): MapData {
         nodes: new Map(Object.entries(json.nodes)),
         roads: new Map(Object.entries(json.roads)),
         edges: new Map(Object.entries(json.edges)),
-    }
+    };
 }

@@ -1,4 +1,3 @@
-
 export function vec2(x: number, y: number): Vector2 {
     return new Vector2(x, y);
 }
@@ -65,7 +64,7 @@ export class Vector2 {
     }
 
     toString(): string {
-        return `vec2(${this.x}, ${this.y})`;
+        return `vec2(${this.x.toString()}, ${this.y.toString()})`;
     }
 
     map(fn: (x: number) => number): Vector2 {

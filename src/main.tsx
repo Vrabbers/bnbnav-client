@@ -1,14 +1,15 @@
-import "./index.css"
-import App from './App.tsx'
-import { render } from "preact"
+import "./index.css";
+import App from "./App.tsx";
+import { render } from "preact";
 import { MapRenderer } from "./map-renderer/map-renderer.ts";
 
-let domMap = document.getElementById("decapitatedCanvas");
+const domMap = document.getElementById("decapitatedCanvas");
 if (!(domMap instanceof HTMLCanvasElement)) {
     throw new Error("Couldn't find map canvas!");
 }
 
-let map = new MapRenderer(domMap);
+const map = new MapRenderer(domMap);
 console.log(map);
 
-render(<App/>, document.getElementById("root")!);
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+render(<App />, document.getElementById("root")!);

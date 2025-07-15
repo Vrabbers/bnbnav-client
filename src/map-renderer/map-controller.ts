@@ -6,11 +6,15 @@ export class MapController {
     #state: MapState;
     #update: () => void;
 
-    #panning: boolean = false;
+    #panning = false;
     #panFirstMouse: Vector2 = vec2(0, 0);
     #panFirstPan: Vector2 = vec2(0, 0);
 
-    constructor(canvas: HTMLCanvasElement, state: MapState, update: () => void) {
+    constructor(
+        canvas: HTMLCanvasElement,
+        state: MapState,
+        update: () => void,
+    ) {
         this.#canvas = canvas;
         this.#state = state;
         this.#update = update;
@@ -20,7 +24,9 @@ export class MapController {
         this.#canvas.addEventListener("mousedown", this.#mouseDown.bind(this));
         this.#canvas.addEventListener("mouseup", this.#mouseUp.bind(this));
         this.#canvas.addEventListener("mousemove", this.#mouseMove.bind(this));
-        this.#canvas.addEventListener("wheel", this.#wheel.bind(this), { passive: false });
+        this.#canvas.addEventListener("wheel", this.#wheel.bind(this), {
+            passive: false,
+        });
     }
 
     #mouseDown(evt: MouseEvent) {
@@ -39,7 +45,9 @@ export class MapController {
 
     #mouseMove(evt: MouseEvent) {
         if (this.#panning) {
-            const delta = (vec2(evt.x, evt.y).sub(this.#panFirstMouse)).div(this.#state.scale);
+            const delta = vec2(evt.x, evt.y)
+                .sub(this.#panFirstMouse)
+                .div(this.#state.scale);
             this.#state.pan = this.#panFirstPan.add(delta);
             this.#state.updateMatrices();
             this.#update();
@@ -50,7 +58,8 @@ export class MapController {
         evt.preventDefault();
 
         const mousePos = vec2(evt.x, evt.y);
-        const zoomFactor = -evt.deltaY * this.#state.scale / (evt.ctrlKey ? 100 : 1000);
+        const zoomFactor =
+            (-evt.deltaY * this.#state.scale) / (evt.ctrlKey ? 100 : 1000);
         const newScale = this.#state.scale + zoomFactor;
 
         this.#state.zoomAt(mousePos, newScale);

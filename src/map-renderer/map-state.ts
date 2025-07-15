@@ -4,7 +4,7 @@ import { vec2, Vector2 } from "../math/vector2";
 
 export class MapState {
     pan: Vector2 = vec2(0, 0);
-    scale: number = 1.5;
+    scale = 1.5;
 
     transform: Matrix3x2 = Matrix3x2.identity();
     inverseTransform: Matrix3x2 = Matrix3x2.identity();
@@ -29,19 +29,17 @@ export class MapState {
     zoomAt(point: Vector2, newScale: number) {
         const clampedScale = MathH.clamp(newScale, 0.125, 16);
 
-        if (clampedScale === this.scale)
-            return;
-        
+        if (clampedScale === this.scale) return;
+
         const worldPosBefore = this.toWorld(point);
-        
+
         this.scale = clampedScale;
         this.updateMatrices();
-        
+
         const worldPosAfter = this.toWorld(point);
         const error = worldPosAfter.sub(worldPosBefore);
-        
+
         this.pan = this.pan.add(error);
         this.updateMatrices();
     }
-
 }

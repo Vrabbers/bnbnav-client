@@ -5,8 +5,8 @@ import { MapState } from "./map-state";
 
 interface GridBin {
     //image: ImageBitmap | null,
-    x: number | null,
-    z: number | null,
+    x: number | null;
+    z: number | null;
 }
 
 export class MapRenderer {
@@ -18,15 +18,19 @@ export class MapRenderer {
     #resObv: ResizeObserver;
     #grid: GridBin[][] = [];
     #gridSideLength = 256;
-    #gridWidth: number = 0;
-    #gridHeight: number = 0;
+    #gridWidth = 0;
+    #gridHeight = 0;
 
     constructor(canvas: HTMLCanvasElement) {
         this.#canvas = canvas;
         this.#width = canvas.clientWidth;
         this.#height = canvas.clientHeight;
         this.#state = new MapState();
-        this.#controller = new MapController(canvas, this.#state, this.requestRender.bind(this));
+        this.#controller = new MapController(
+            canvas,
+            this.#state,
+            this.requestRender.bind(this),
+        );
         this.#controller.connect();
         this.#resObv = new ResizeObserver(this.#resizeCanvas.bind(this));
         this.#resObv.observe(this.#canvas);
@@ -34,13 +38,17 @@ export class MapRenderer {
 
     #resizeGrid() {
         const log2Scale = Math.ceil(Math.log2(this.#state.scale));
-        const newSideLength = 256 * (2 ** (-log2Scale));
+        const newSideLength = 256 * 2 ** -log2Scale;
         if (newSideLength != this.#gridSideLength) {
             this.#gridSideLength = newSideLength;
         }
 
-        const xb = Math.ceil(this.#width / this.#state.scale / this.#gridSideLength);
-        const yb = Math.ceil(this.#height / this.#state.scale / this.#gridSideLength);
+        const xb = Math.ceil(
+            this.#width / this.#state.scale / this.#gridSideLength,
+        );
+        const yb = Math.ceil(
+            this.#height / this.#state.scale / this.#gridSideLength,
+        );
 
         if (this.#grid.length >= xb + 1 && this.#grid[0].length >= yb + 1)
             return;
@@ -67,7 +75,7 @@ export class MapRenderer {
         ctx.strokeRect(0, 0, this.#width - 1, this.#height - 1);
         ctx.save();
         ctx.textBaseline = "top";
-        ctx.font = `${(16 / this.#state.scale)}px sans-serif`; 
+        ctx.font = `${(16 / this.#state.scale).toString()}px sans-serif`;
         console.log(ctx.font);
         ctx.transform(...this.#state.transform);
 
@@ -80,7 +88,8 @@ export class MapRenderer {
 
         const modX = MathH.mod(start.x, this.#gridWidth);
 
-        const correctedSideLength = this.#gridSideLength + 1 / this.#state.scale;
+        const correctedSideLength =
+            this.#gridSideLength + 1 / this.#state.scale;
         let y = MathH.mod(start.y, this.#gridHeight);
         for (let j = 0; j < diff.y; j++) {
             let x = modX;
@@ -111,18 +120,27 @@ export class MapRenderer {
                 //     ctx.globalAlpha = 0.5;
                 //     ctx.drawImage(entry.image, 0, 0, 501, 501, firstX + i * this.#gridSideLength, firstY + j * this.#gridSideLength, correctedSideLength, correctedSideLength);
                 // }
-                ctx.fillStyle = `rgb(${Math.floor(x * 255 / this.#gridWidth)} ${Math.floor(y * 255 / this.#gridHeight)} 127)`;
-                ctx.fillRect(first.x + i * this.#gridSideLength, first.y + j * this.#gridSideLength, correctedSideLength, correctedSideLength);
+                ctx.fillStyle = `rgb(${Math.floor((x * 255) / this.#gridWidth).toString()} ${Math.floor((y * 255) / this.#gridHeight).toString()} 127)`;
+                ctx.fillRect(
+                    first.x + i * this.#gridSideLength,
+                    first.y + j * this.#gridSideLength,
+                    correctedSideLength,
+                    correctedSideLength,
+                );
                 ctx.fillStyle = "white";
-                ctx.fillText(`[${entry.x * this.#gridSideLength},${entry.z * this.#gridSideLength}]`, first.x + i * this.#gridSideLength, first.y + j * this.#gridSideLength)
+                ctx.fillText(
+                    `[${(entry.x * this.#gridSideLength).toString()},${(entry.z * this.#gridSideLength).toString()}]`,
+                    first.x + i * this.#gridSideLength,
+                    first.y + j * this.#gridSideLength,
+                );
                 x = (x + 1) % this.#gridWidth;
             }
             y = (y + 1) % this.#gridHeight;
         }
 
         ctx.restore();
-        ctx.fillText(`dt: ${dt} ms / fps: ${1000 / (dt)}`, 24, 24);
-        ctx.fillText(`${this.#state.pan} / ${this.#state.scale}`, 24, 48);
+        ctx.fillText(`dt: ${dt.toString()} ms / fps: ${(1000 / dt).toString()}`, 24, 24);
+        ctx.fillText(`${this.#state.pan.toString()} / ${this.#state.scale.toString()}`, 24, 48);
     }
 
     #resizeCanvas() {
@@ -132,9 +150,14 @@ export class MapRenderer {
         this.#canvas.height = h * window.devicePixelRatio;
         this.requestRender();
     }
-    #lastTime: number = NaN;
+    #lastTime = NaN;
     #renderCanvas(time: number) {
-        const ctx = this.#canvas.getContext("2d")!;
+        const ctx = this.#canvas.getContext("2d");
+
+        if (ctx === null) {
+            throw new Error("Unable to get 2D canvas context?");
+        }
+
         ctx.clearRect(0, 0, this.#canvas.width, this.#canvas.height);
         ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
         this.#width = this.#canvas.width / window.devicePixelRatio;

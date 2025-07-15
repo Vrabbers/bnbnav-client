@@ -1,14 +1,16 @@
 import { Vector2, vec2 } from "./vector2";
 
-// Represents a tranformation matrix, as those token by 
+// Represents a tranformation matrix, as those token by
 // e.g. the CanvasRenderingContext2D>>transform function (use ... operator)
 // (which is why they appear weirdly transposed)
+// prettier-ignore
 export type Matrix3x2 = [
     number, number,
     number, number,
     number, number,
 ];
 
+// prettier-ignore
 export const Matrix3x2 = {
     identity(): Matrix3x2 {
         return [
