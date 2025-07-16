@@ -1,7 +1,0 @@
-# Ignore artifacts:
-dist
-
-# Ignore tauri:
-src-tauri
-
-pnpm-lock.yaml
