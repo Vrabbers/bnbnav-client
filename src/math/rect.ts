@@ -13,24 +13,28 @@ export class Rect {
         this.height = h;
     }
 
-    get left() {
+    get left(): number {
         return this.x;
     }
 
-    get top() {
+    get top(): number {
         return this.y;
     }
 
-    get right() {
+    get right(): number {
         return this.x + this.width;
     }
 
-    get bottom() {
+    get bottom(): number {
         return this.y + this.height;
     }
 
-    get area() {
+    get area(): number {
         return this.width * this.height;
+    }
+
+    get semiperimeter(): number {
+        return this.width + this.height;
     }
 
     static fromEdges(left: number, top: number, right: number, bottom: number) {
@@ -102,7 +106,7 @@ export class Rect {
         return null;
     }
 
-    static intersectArea(a: Rect, b:Rect): number {
+    static intersectArea(a: Rect, b: Rect): number {
         const left = Math.max(a.left, b.left);
         const right = Math.min(a.right, b.right);
         const top = Math.max(a.top, b.top);

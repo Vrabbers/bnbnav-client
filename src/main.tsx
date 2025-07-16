@@ -11,5 +11,4 @@ if (!(domMap instanceof HTMLCanvasElement)) {
 const map = new MapRenderer(domMap);
 console.log(map);
 
-// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 render(<App />, document.getElementById("root")!);
