@@ -2,68 +2,68 @@ import { Vector2, vec2 } from "../math/vector2";
 import type { MapState } from "./map-state";
 
 export class MapController {
-    #canvas: HTMLCanvasElement;
-    #state: MapState;
-    #update: () => void;
+    private canvas: HTMLCanvasElement;
+    private state: MapState;
+    private update: () => void;
 
-    #panning = false;
-    #panFirstMouse: Vector2 = vec2(0, 0);
-    #panFirstPan: Vector2 = vec2(0, 0);
+    private panning = false;
+    private panFirstMouse: Vector2 = vec2(0, 0);
+    private panFirstPan: Vector2 = vec2(0, 0);
 
     constructor(
         canvas: HTMLCanvasElement,
         state: MapState,
         update: () => void,
     ) {
-        this.#canvas = canvas;
-        this.#state = state;
-        this.#update = update;
+        this.canvas = canvas;
+        this.state = state;
+        this.update = update;
     }
 
     connect() {
-        this.#canvas.addEventListener("mousedown", this.#mouseDown.bind(this));
-        this.#canvas.addEventListener("mouseup", this.#mouseUp.bind(this));
-        this.#canvas.addEventListener("mousemove", this.#mouseMove.bind(this));
-        this.#canvas.addEventListener("wheel", this.#wheel.bind(this), {
+        this.canvas.addEventListener("mousedown", this.mouseDown.bind(this));
+        this.canvas.addEventListener("mouseup", this.mouseUp.bind(this));
+        this.canvas.addEventListener("mousemove", this.mouseMove.bind(this));
+        this.canvas.addEventListener("wheel", this.wheel.bind(this), {
             passive: false,
         });
     }
 
-    #mouseDown(evt: MouseEvent) {
+    private mouseDown(evt: MouseEvent) {
         if (evt.button === 0) {
-            this.#panning = true;
-            this.#panFirstMouse = vec2(evt.x, evt.y);
-            this.#panFirstPan = this.#state.pan;
+            this.panning = true;
+            this.panFirstMouse = vec2(evt.x, evt.y);
+            this.panFirstPan = this.state.pan;
         }
     }
 
-    #mouseUp(_evt: MouseEvent) {
-        if (this.#panning) {
-            this.#panning = false;
+    private mouseUp(_evt: MouseEvent) {
+        if (this.panning) {
+            this.panning = false;
         }
     }
 
-    #mouseMove(evt: MouseEvent) {
-        if (this.#panning) {
+    private mouseMove(evt: MouseEvent) {
+        if (this.panning) {
             const delta = vec2(evt.x, evt.y)
-                .sub(this.#panFirstMouse)
-                .div(this.#state.scale);
-            this.#state.pan = this.#panFirstPan.add(delta);
-            this.#state.updateMatrices();
-            this.#update();
+                .sub(this.panFirstMouse)
+                .div(this.state.scale);
+            this.state.pan = this.panFirstPan.add(delta);
+            this.state.updateMatrices();
+            this.update();
         }
     }
 
-    #wheel(evt: WheelEvent) {
+    private wheel(evt: WheelEvent) {
         evt.preventDefault();
 
         const mousePos = vec2(evt.x, evt.y);
         const zoomFactor =
-            (-evt.deltaY * this.#state.scale) / (evt.ctrlKey ? 100 : 1000);
-        const newScale = this.#state.scale + zoomFactor;
+            (-evt.deltaY * this.state.scale) / (evt.ctrlKey ? 100 : 1000);
+        const newScale = this.state.scale + zoomFactor;
 
-        this.#state.zoomAt(mousePos, newScale);
+        this.state.zoomAt(mousePos, newScale);
 
-        this.#update();
+        this.update();
     }
 }
