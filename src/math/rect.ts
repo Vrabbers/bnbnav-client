@@ -1,4 +1,4 @@
-import type { Vector2 } from "./vector2";
+import { vec2, Vector2 } from "./vector2";
 
 export class Rect {
     x: number;
@@ -35,6 +35,10 @@ export class Rect {
 
     get semiperimeter(): number {
         return this.width + this.height;
+    }
+
+    get center(): Vector2 {
+        return vec2(this.x + this.width * 0.5, this.y + this.height * 0.5);
     }
 
     static fromEdges(left: number, top: number, right: number, bottom: number) {
