@@ -80,7 +80,6 @@ export class MapRenderer {
         ctx.save();
         ctx.textBaseline = "top";
         ctx.font = `${(16 / this.state.scale).toString()}px sans-serif`;
-        console.log(ctx.font);
         ctx.transform(...this.state.transform);
 
         /*
@@ -144,9 +143,10 @@ export class MapRenderer {
         }
             */
         ctx.strokeStyle = "black";
+        ctx.lineWidth = 1 / this.state.scale;
 
         function tree(n: Node<string>, level:number) {
-            let r = n.rect;
+            let r = n.rect.expand(25 - 5 *level, 25 - 5 * level);
             if (n.type === "non-leaf") {
                 for (const child of n.items) {
                     tree(child, level + 1);
@@ -154,8 +154,8 @@ export class MapRenderer {
             } else {
                 ctx.strokeStyle = "cornflowerblue";
                 for (const child of n.items) {
-                    r = child.rect;
-                    ctx.strokeRect(r.x, r.y, r.width, r.height);
+                    let r2 = child.rect;
+                    ctx.strokeRect(r2.x, r2.y, r2.width, r2.height);
                 }
             }
             ctx.strokeStyle = `hsl(${(level * 25).toString()} 100% 50%)`;

@@ -16,10 +16,8 @@ const tree = new RStarTree();
 const data = await fetch("https://bnbnav.aircs.racing/api/data");
 const json = await data.json() as JsonMapData;
 const mapd = collectMapData(json);
-for (const [key, val] of mapd.edges.entries()) {
-    const node1 = mapd.nodes.get(val.node1)!;
-    const node2 = mapd.nodes.get(val.node2)!;
-    tree.insert({entry: key, rect: Rect.fromEdges(node1.x, node1.z, node2.x, node2.z).normalize()});
+for (const [key, val] of mapd.nodes.entries()) {
+    tree.insert({entry: key, rect: Rect.fromEdges(val.x, val.z, val.x + 1, val.z + 1)});
 }
 
 console.log(tree);

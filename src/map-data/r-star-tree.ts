@@ -29,6 +29,15 @@ export interface NonLeaf<T> extends Bounded {
 
 export type Node<T> = Leaf<T> | NonLeaf<T>;
 
+function overlap(kRect: Rect, rects: Rect[]) {
+    let total = 0;
+    for (const rect of rects) {
+        if (rect !== kRect)
+            total += Rect.intersectArea(kRect, rect);
+    }
+    return total;
+}
+
 function chooseSubtree<T>(node: Node<T>, testRect: Rect): Node<T> {
     if (node.type === "leaf")
         return node;
@@ -40,25 +49,31 @@ function chooseSubtree<T>(node: Node<T>, testRect: Rect): Node<T> {
         );
         leastP.sort((a, b) => a[1] - b[1]);
         if (leastP.length > LEAST_P) leastP.length = LEAST_P;
-
-        // Find element with least overlap
-        // HACK: this implementation is from a C++ one, in which the function suggested in the paper is simplified
-        // The papers' implementation requires iterating through all of the rectangles for each overlap calculation;
-        // we'll see if the tree which this produces is good enough.
-        let [lowestEntry, lowestEnlarge] = leastP.pop()!;
-        let lowestOverlap = Rect.intersectArea(lowestEntry.rect, testRect);
-        for (const [currentEntry, currentEnlarge] of leastP) {
-            const currentOverlap = Rect.intersectArea(currentEntry.rect, testRect);
-            // If the overlap is greater, or it's tied but its enlargement is larger, don't choose this
-            if (currentOverlap > lowestOverlap) continue;
-            if (currentOverlap === lowestOverlap && currentEnlarge > lowestEnlarge) continue;
-
-            // Strictly less than, or tied and the enlarge is smaller
-            lowestEntry = currentEntry;
-            lowestEnlarge = currentEnlarge;
-            lowestOverlap = currentOverlap;
+        // Find element with least overlap enlarge
+        const rects = node.items.map(x => x.rect);
+        const overlaps = [];
+        for (const [entry, _] of leastP) {
+            overlaps.push(overlap(entry.rect, rects));
         }
-        return lowestEntry;
+        rects.push(testRect);
+        const overlapEnlargements = [];
+        for (const [index, [entry, _]] of leastP.entries()) {
+            overlapEnlargements.push(overlap(entry.rect, rects) - overlaps[index]);
+        }
+        let [leastEntry, leastAreaEnlarge] = leastP.pop()!;
+        let leastArea = leastEntry.rect.area;
+        let leastOverEnlarge = overlapEnlargements.at(-1)!;
+        for (const [i, [entry, entryAreaEnlarge]] of leastP.entries()) {
+            if (overlapEnlargements[i] > leastOverEnlarge) continue;
+            if (overlapEnlargements[i] === leastOverEnlarge && entryAreaEnlarge > leastAreaEnlarge) continue;
+            if (entryAreaEnlarge === leastAreaEnlarge && entry.rect.area > leastArea) continue;
+
+            leastOverEnlarge = overlapEnlargements[i];
+            leastAreaEnlarge = entryAreaEnlarge;
+            leastArea = entry.rect.area;
+            leastEntry = entry;
+        }
+        return leastEntry;
     } else {
         // children are not leaves
         // Determine minimum area cost
@@ -145,7 +160,7 @@ export default class RStarTree<T> {
     private reinsert(node: Node<T>) {
         console.assert(node.items.length === MAX_PER_NODE + 1);
         const nodeCenter = node.rect.center;
-        node.items.sort((a, b) => 
+        node.items.sort((a, b) =>
             Vector2.distance(a.rect.center, nodeCenter) - Vector2.distance(b.rect.center, nodeCenter));
         node.items.reverse();
         const removed = node.items.splice(REINSERT_P);
@@ -183,6 +198,7 @@ export default class RStarTree<T> {
 
             if (split === null)
                 return null;
+
             node.items.push(split);
         }
 
