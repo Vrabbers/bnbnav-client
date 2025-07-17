@@ -1,33 +1,34 @@
-import { MathH } from "../math/math-helpers";
-import { Matrix3x2 } from "../math/matrix3x2";
+import { clamp } from "../math/math-helpers";
+import * as matrix from "../math/matrix3x2";
+import { type Matrix3x2 } from "../math/matrix3x2";
 import { vec2, Vector2 } from "../math/vector2";
 
 export class MapState {
     pan: Vector2 = vec2(0, 0);
     scale = 1.5;
 
-    transform: Matrix3x2 = Matrix3x2.identity();
-    inverseTransform: Matrix3x2 = Matrix3x2.identity();
+    transform: Matrix3x2 = matrix.identity();
+    inverseTransform: Matrix3x2 = matrix.identity();
 
     constructor() {
         this.updateMatrices();
     }
 
     updateMatrices() {
-        this.transform = Matrix3x2.translateScale(this.scale, this.pan);
-        this.inverseTransform = Matrix3x2.inverse(this.transform);
+        this.transform = matrix.translateScale(this.scale, this.pan);
+        this.inverseTransform = matrix.inverse(this.transform);
     }
 
     toScreen(point: Vector2) {
-        return Matrix3x2.multiplyVector(this.transform, point);
+        return matrix.multiplyVector(this.transform, point);
     }
 
     toWorld(point: Vector2) {
-        return Matrix3x2.multiplyVector(this.inverseTransform, point);
+        return matrix.multiplyVector(this.inverseTransform, point);
     }
 
     zoomAt(point: Vector2, newScale: number) {
-        const clampedScale = MathH.clamp(newScale, 0.125, 16);
+        const clampedScale = clamp(newScale, 0.125, 16);
 
         if (clampedScale === this.scale) return;
 

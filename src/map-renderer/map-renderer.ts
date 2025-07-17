@@ -1,4 +1,4 @@
-import { MathH } from "../math/math-helpers";
+import { modulo } from "../math/math-helpers";
 import { vec2 } from "../math/vector2";
 import { MapController } from "./map-controller";
 import { MapState } from "./map-state";
@@ -85,11 +85,11 @@ export class MapRenderer {
         const diff = end.sub(start);
         const first = start.mul(this.gridSideLength);
 
-        const modX = MathH.mod(start.x, this.gridWidth);
+        const modX = modulo(start.x, this.gridWidth);
 
         const correctedSideLength =
             this.gridSideLength + 1 / this.state.scale;
-        let y = MathH.mod(start.y, this.gridHeight);
+        let y = modulo(start.y, this.gridHeight);
         for (let j = 0; j < diff.y; j++) {
             let x = modX;
             for (let i = 0; i < diff.x; i++) {
