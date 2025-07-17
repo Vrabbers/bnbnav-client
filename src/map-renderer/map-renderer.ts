@@ -1,5 +1,3 @@
-import type { Node } from "../map-data/r-star-tree";
-import type RStarTree from "../map-data/r-star-tree";
 import { MathH } from "../math/math-helpers";
 import { vec2 } from "../math/vector2";
 import { MapController } from "./map-controller";
@@ -22,9 +20,8 @@ export class MapRenderer {
     private gridSideLength = 256;
     private gridWidth = 0;
     private gridHeight = 0;
-    tree: RStarTree<string>;
 
-    constructor(canvas: HTMLCanvasElement, tree: RStarTree<string>) {
+    constructor(canvas: HTMLCanvasElement) {
         this.canvas = canvas;
         this.width = canvas.clientWidth;
         this.height = canvas.clientHeight;
@@ -37,7 +34,6 @@ export class MapRenderer {
         this.controller.connect();
         this.resObv = new ResizeObserver(this.resizeCanvas.bind(this));
         this.resObv.observe(this.canvas);
-        this.tree = tree;
     }
 
     private resizeGrid() {
@@ -82,7 +78,6 @@ export class MapRenderer {
         ctx.font = `${(16 / this.state.scale).toString()}px sans-serif`;
         ctx.transform(...this.state.transform);
 
-        /*
         const topRight = this.state.toWorld(vec2(0, 0));
         const bottomLeft = this.state.toWorld(vec2(this.width, this.height));
         const start = topRight.div(this.gridSideLength).map(Math.floor);
@@ -141,28 +136,7 @@ export class MapRenderer {
             }
             y = (y + 1) % this.gridHeight;
         }
-            */
-        ctx.strokeStyle = "black";
-        ctx.lineWidth = 1 / this.state.scale;
 
-        function tree(n: Node<string>, level:number) {
-            let r = n.rect.expand(25 - 5 *level, 25 - 5 * level);
-            if (n.type === "non-leaf") {
-                for (const child of n.items) {
-                    tree(child, level + 1);
-                }
-            } else {
-                ctx.strokeStyle = "cornflowerblue";
-                for (const child of n.items) {
-                    let r2 = child.rect;
-                    ctx.strokeRect(r2.x, r2.y, r2.width, r2.height);
-                }
-            }
-            ctx.strokeStyle = `hsl(${(level * 25).toString()} 100% 50%)`;
-            ctx.strokeRect(r.x, r.y, r.width, r.height);
-        }
-
-        tree(this.tree.root!, 0);
 
         ctx.restore();
         ctx.fillText(`dt: ${dt.toString()} ms / fps: ${(1000 / dt).toString()}`, 24, 24);
