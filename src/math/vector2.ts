@@ -3,8 +3,8 @@ export function vec2(x: number, y: number): Vector2 {
 }
 
 export class Vector2 {
-    x: number;
-    y: number;
+    readonly x: number;
+    readonly y: number;
 
     constructor(x: number, y: number) {
         this.x = x;

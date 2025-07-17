@@ -1,32 +1,24 @@
 import { vec2, Vector2 } from "./vector2";
 
 export class Rect {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
+    readonly left: number;
+    readonly top: number;
+    readonly right: number;
+    readonly bottom: number;
 
-    constructor(x: number, y: number, w: number, h: number) {
-        this.x = x;
-        this.y = y;
-        this.width = w;
-        this.height = h;
+    private constructor(l: number, t: number, r: number, b: number) {
+        this.left = l;
+        this.top = t;
+        this.right = r;
+        this.bottom = b;
     }
 
-    get left(): number {
-        return this.x;
+    get width(): number {
+        return this.right - this.left;
     }
 
-    get top(): number {
-        return this.y;
-    }
-
-    get right(): number {
-        return this.x + this.width;
-    }
-
-    get bottom(): number {
-        return this.y + this.height;
+    get height(): number {
+        return this.bottom - this.top;
     }
 
     get area(): number {
@@ -38,15 +30,11 @@ export class Rect {
     }
 
     get center(): Vector2 {
-        return vec2(this.x + this.width * 0.5, this.y + this.height * 0.5);
-    }
-
-    static fromEdges(left: number, top: number, right: number, bottom: number) {
-        return new Rect(left, top, right - left, bottom - top);
+        return vec2((this.left + this.right) * 0.5, (this.top + this.bottom) * 0.5);
     }
 
     static fromCorners(topLeft: Vector2, bottomRight: Vector2): Rect {
-        return this.fromEdges(
+        return new Rect(
             topLeft.x,
             topLeft.y,
             bottomRight.x,
@@ -55,27 +43,21 @@ export class Rect {
     }
 
     normalize(): Rect {
-        if (this.height >= 0 || this.width >= 0) {
-            return this;
-        } else {
-            let x = this.x;
-            let y = this.y;
-            let width = this.width;
-            let height = this.height;
-            if (width < 0) {
-                x += width;
-                width = -width;
-            }
-            if (height < 0) {
-                y += height;
-                height = -height;
-            }
-            return new Rect(x, y, width, height);
+        let left = this.left;
+        let right = this.right;
+        if (this.left > this.right) {
+            [left, right] = [right, left];
         }
+        let top = this.top;
+        let bottom = this.bottom;
+        if (this.top > this.bottom) {
+            [top, bottom] = [bottom, top];
+        } 
+        return new Rect(left, top, right, bottom);
     }
 
     static union(a: Rect, b: Rect): Rect {
-        return this.fromEdges(
+        return new Rect(
             Math.min(a.left, b.left),
             Math.min(a.top, b.top),
             Math.max(a.right, b.right),
@@ -94,7 +76,7 @@ export class Rect {
             bottom = Math.max(bottom, rect.bottom);
             right = Math.max(right, rect.right);
         }
-        return this.fromEdges(left, top, right, bottom);
+        return new Rect(left, top, right, bottom);
     }
 
     static intersect(a: Rect, b: Rect): Rect | null {
@@ -104,7 +86,7 @@ export class Rect {
         const bottom = Math.min(a.bottom, b.bottom);
 
         if (right >= left && bottom >= top) {
-            return this.fromEdges(left, top, right, bottom);
+            return new Rect(left, top, right, bottom);
         }
 
         return null;
@@ -116,19 +98,19 @@ export class Rect {
         const top = Math.max(a.top, b.top);
         const bottom = Math.min(a.bottom, b.bottom);
 
-        if (right >= left && bottom >= top) {
+        if (right > left && bottom > top) {
             return (right - left) * (bottom - top);
         }
 
         return 0;
     }
 
-    expand(w: number, h: number): Rect {
+    expand(x: number): Rect {
         return new Rect(
-            this.x - w,
-            this.y - w,
-            this.width + 2 * w,
-            this.height + 2 * h,
+            this.left - x,
+            this.top - x,
+            this.right + x,
+            this.bottom + x,
         );
     }
 }
