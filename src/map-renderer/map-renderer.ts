@@ -9,6 +9,8 @@ interface GridBin {
     z: number | null;
 }
 
+const BASE_GRID_SIDE_LENGTH = 512;
+
 export class MapRenderer {
     private canvas: HTMLCanvasElement;
     private state: MapState;
@@ -17,7 +19,7 @@ export class MapRenderer {
     private height: number;
     private resObv: ResizeObserver;
     private grid: GridBin[][] = [];
-    private gridSideLength = 256;
+    private gridSideLength = BASE_GRID_SIDE_LENGTH;
     private gridWidth = 0;
     private gridHeight = 0;
 
@@ -38,7 +40,7 @@ export class MapRenderer {
 
     private resizeGrid() {
         const log2Scale = Math.ceil(Math.log2(this.state.scale));
-        const newSideLength = 256 * 2 ** -log2Scale;
+        const newSideLength = BASE_GRID_SIDE_LENGTH * 2 ** -log2Scale;
         if (newSideLength != this.gridSideLength) {
             this.gridSideLength = newSideLength;
         }
