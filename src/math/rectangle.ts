@@ -63,7 +63,7 @@ export function unionMany(rects: Rectangle[]): Rectangle {
     return rect(left, top, right, bottom);
 }
 
-export function intersect(a: Rectangle, b: Rectangle): Rectangle | null {
+export function intersection(a: Rectangle, b: Rectangle): Rectangle | null {
     const left = Math.max(a.left, b.left);
     const right = Math.min(a.right, b.right);
     const top = Math.max(a.top, b.top);
@@ -76,7 +76,7 @@ export function intersect(a: Rectangle, b: Rectangle): Rectangle | null {
     return null;
 }
 
-export function intersectArea(a: Rectangle, b: Rectangle): number {
+export function intersectionArea(a: Rectangle, b: Rectangle): number {
     const left = Math.max(a.left, b.left);
     const right = Math.min(a.right, b.right);
     const top = Math.max(a.top, b.top);
@@ -87,6 +87,10 @@ export function intersectArea(a: Rectangle, b: Rectangle): number {
     }
 
     return 0;
+}
+
+export function intersects(a: Rectangle, b: Rectangle): boolean {
+    return (a.left <= b.right) && (b.left <= a.right) && (a.top <= b.bottom) && (b.top <= a.bottom);
 }
 
 export function expand(r: Rectangle, x: number): Rectangle {

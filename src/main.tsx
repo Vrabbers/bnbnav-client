@@ -5,7 +5,7 @@ import { MapRenderer } from "./map-renderer/map-renderer.ts";
 import { collectMapData, type EdgeId, type JsonMapData } from "./map-data/map-types.ts";
 import { MapGraph } from "./map-data/map-graph.ts";
 import { MapTree } from "./map-data/map-tree.ts";
-import { normalize, rect } from "./math/rectangle.ts";
+import { expand, normalize, rect } from "./math/rectangle.ts";
 
 
 
@@ -20,14 +20,12 @@ const tree = new MapTree<EdgeId>();
 for (const [key, value] of data.edges.entries()) {
     const n1 = data.nodes.get(value.node1)!;
     const n2 = data.nodes.get(value.node2)!;
-    if (n1.world === "world") continue;
-    if (n2.world === "world") continue;
-    const bound = normalize(rect(n1.x, n1.z, n2.x, n2.z));
+    const bound = expand(normalize(rect(n1.x, n1.z, n2.x, n2.z)), 5);
     tree.insert({entry: key, bound: bound});
 }
 
 
 const domMap = document.getElementById("decapitatedCanvas") as HTMLCanvasElement;
-const map = new MapRenderer(domMap, tree);
+const map = new MapRenderer(domMap, tree, data);
 console.log(map);
 render(<App />, document.getElementById("root")!);

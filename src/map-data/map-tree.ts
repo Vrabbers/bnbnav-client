@@ -2,7 +2,7 @@ import assert from "../assert";
 import { type Rectangle } from "../math/rectangle";
 import * as rectangle from "../math/rectangle";
 
-const MAX_IN_NODE = 64;
+const MAX_IN_NODE = 32;
 const MIN_IN_NODE = 2;
 
 export interface Entry<T> {
@@ -64,11 +64,9 @@ export class MapTree<T> {
         }
         assert(typeof index1 === "number" && typeof index2 === "number");
 
-        const group1 = node.items.slice(index1, index1 + 1);
-        const group2 = node.items.slice(index2, index2 + 1);
-        const items = node.items.filter((_v, i) =>  i !== index1 && i !== index2 );
-
-        assert(group1.length === 1 && group2.length === 1);
+        const group1 = [node.items[index1]];
+        const group2 = [node.items[index2]];
+        const items = node.items.filter((_v, i) => i !== index1 && i !== index2 );
         
         let bound1 = group1[0].bound;
         let bound2 = group2[0].bound;
@@ -127,19 +125,18 @@ export class MapTree<T> {
     }
 
     private adjustTree(node: Node<T>, nodeSplit: Node<T> | undefined) {
-        const parent = node.parent;
-        while (parent !== null) {
-            parent.bound = rectangle.union(parent.bound, node.bound);
+        while (node.parent !== null) {
+            let parentSplit = undefined;
+            node.parent.bound = rectangle.union(node.parent.bound, node.bound);
             if (nodeSplit !== undefined) {
-                parent.bound = rectangle.union(parent.bound, nodeSplit.bound);
-                parent.items.push(nodeSplit);
-                let parentSplit = undefined;
-                if (parent.items.length > MAX_IN_NODE) {
-                    parentSplit = this.split(parent);
+                node.parent.bound = rectangle.union(node.parent.bound, nodeSplit.bound);
+                node.parent.items.push(nodeSplit);
+                if (node.parent.items.length > MAX_IN_NODE) {
+                    parentSplit = this.split(node.parent);
                 }
-                node = parent;
-                nodeSplit = parentSplit;
             }
+            node = node.parent;
+            nodeSplit = parentSplit;
         }
 
         if (nodeSplit !== undefined) {
@@ -156,12 +153,15 @@ export class MapTree<T> {
     }
 
     private insertAtLeaf(node: Node<T>, entry: Entry<T>) {
-        const l = chooseLeaf(node, entry.bound);
-        l.items.push(entry);
-        if (l.items.length > MAX_IN_NODE) {
-            const ll = this.split(node);
-            this.adjustTree(node, ll);
+        const leaf = chooseLeaf(node, entry.bound);
+        leaf.items.push(entry);
+        leaf.bound = rectangle.union(leaf.bound, entry.bound);
+        let leafSplit = undefined;
+        if (leaf.items.length > MAX_IN_NODE) {
+            leafSplit = this.split(leaf);
         }
+        this.adjustTree(leaf, leafSplit);
+
     }
 
     insert(entry: Entry<T>) {
@@ -177,6 +177,29 @@ export class MapTree<T> {
 
         this.insertAtLeaf(this.root, entry);
 
+    }
+
+    private *query(n: Node<T>, rect: Rectangle) : Generator<Entry<T>, void, void> {
+        if (isInternal(n)) {
+            for (const c of n.items) {
+                if (rectangle.intersects(c.bound, rect)) {
+                    yield* this.query(c, rect);
+                }
+            }
+        } else {
+            for (const c of n.items) {
+                if (rectangle.intersects(c.bound, rect)) {
+                    yield c as Entry<T>;
+                }
+            }
+        }
+    }
+
+    *search(rect: Rectangle): Generator<Entry<T>, void, void> {
+        if (this.root === null)
+            return;
+
+        yield* this.query(this.root, rect);
     }
 }
 

@@ -1,4 +1,5 @@
-import type { MapTree, Node } from "../map-data/map-tree";
+import type { MapTree } from "../map-data/map-tree";
+import type { MapData } from "../map-data/map-types";
 import { modulo } from "../math/math-helpers";
 import * as rect from "../math/rectangle";
 import { vec2 } from "../math/vector2";
@@ -26,8 +27,9 @@ export class MapRenderer {
     private gridWidth = 0;
     private gridHeight = 0;
     tree;
+    data;
 
-    constructor(canvas: HTMLCanvasElement, tree: MapTree<string>) {
+    constructor(canvas: HTMLCanvasElement, tree: MapTree<string>, data: MapData) {
         this.canvas = canvas;
         this.width = canvas.clientWidth;
         this.height = canvas.clientHeight;
@@ -41,6 +43,7 @@ export class MapRenderer {
         this.resObv = new ResizeObserver(this.resizeCanvas.bind(this));
         this.resObv.observe(this.canvas);
         this.tree = tree;
+        this.data = data;
     }
 
     private resizeGrid() {
@@ -144,25 +147,15 @@ export class MapRenderer {
             y = (y + 1) % this.gridHeight;
         }
 
-
-        function tree(n: Node<string>, level:number) {
-            const r = n.bound;
-            if (!n.isLeaf) {
-                for (const child of n.items) {
-                    tree(child as Node<string>, level + 1);
-                }
-            } else {
-                ctx.strokeStyle = "cornflowerblue";
-                for (const child of n.items) {
-                    const r2 = child.bound;
-                    ctx.strokeRect(r2.left, r2.top, rect.width(r2), rect.height(r2));
-                }
-            }
-            ctx.strokeStyle = `hsl(${(level * 25).toString()} 100% 50%)`;
-            ctx.strokeRect(r.left, r.top, rect.width(r), rect.height(r));
+        for (const { entry, bound: _ } of this.tree.search(rect.rect(topLeft.x, topLeft.y, bottomRight.x, bottomRight.y))) {
+            const edge = this.data.edges.get(entry)!;
+            const n1 = this.data.nodes.get(edge?.node1)!;
+            const n2 = this.data.nodes.get(edge?.node2)!;
+            ctx.beginPath();
+            ctx.moveTo(n1.x, n1.z);
+            ctx.lineTo(n2.x, n2.z);
+            ctx.stroke();
         }
-
-        tree(this.tree.root!, 0);
 
 
         ctx.restore();
