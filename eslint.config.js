@@ -45,13 +45,8 @@ export default defineConfig([
                     ignoreRestSiblings: true,
                 },
             ],
-            "@typescript-eslint/no-unnecessary-condition": [
-                "error",
-                {
-                    allowConstantLoopConditions: 'only-allowed-literals',
-                }
-            ],
-            "@typescript-eslint/no-non-null-assertion": "off",
+            "@typescript-eslint/no-unnecessary-condition": "off",
+            "@typescript-eslint/no-non-null-assertion": "off", 
         },
     },
 ]);

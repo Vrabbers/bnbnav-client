@@ -1,11 +1,11 @@
-export interface Rect {
+export interface Rectangle {
     readonly left: number;
     readonly top: number;
     readonly right: number;
     readonly bottom: number;
 }
 
-export function rect(l: number, t: number, r: number, b: number): Rect {
+export function rect(l: number, t: number, r: number, b: number): Rectangle {
     return {
         left: l,
         top: t,
@@ -14,19 +14,19 @@ export function rect(l: number, t: number, r: number, b: number): Rect {
     };
 }
 
-export function width(r: Rect): number {
+export function width(r: Rectangle): number {
     return r.right - r.left;
 }
 
-export function height(r: Rect): number {
+export function height(r: Rectangle): number {
     return r.bottom - r.top;
 }
 
-export function area(r: Rect): number {
+export function area(r: Rectangle): number {
     return width(r) * height(r);
 }
 
-export function normalize(r: Rect): Rect {
+export function normalize(r: Rectangle): Rectangle {
     let left = r.left;
     let right = r.right;
     if (r.left > r.right) {
@@ -40,7 +40,7 @@ export function normalize(r: Rect): Rect {
     return rect(left, top, right, bottom);
 }
 
-export function union(a: Rect, b: Rect): Rect {
+export function union(a: Rectangle, b: Rectangle): Rectangle {
     return rect(
         Math.min(a.left, b.left),
         Math.min(a.top, b.top),
@@ -49,7 +49,7 @@ export function union(a: Rect, b: Rect): Rect {
     );
 }
 
-export function unionMany(rects: Rect[]): Rect {
+export function unionMany(rects: Rectangle[]): Rectangle {
     let top = +Infinity;
     let left = +Infinity;
     let bottom = -Infinity;
@@ -63,7 +63,7 @@ export function unionMany(rects: Rect[]): Rect {
     return rect(left, top, right, bottom);
 }
 
-export function intersect(a: Rect, b: Rect): Rect | null {
+export function intersect(a: Rectangle, b: Rectangle): Rectangle | null {
     const left = Math.max(a.left, b.left);
     const right = Math.min(a.right, b.right);
     const top = Math.max(a.top, b.top);
@@ -76,7 +76,7 @@ export function intersect(a: Rect, b: Rect): Rect | null {
     return null;
 }
 
-export function intersectArea(a: Rect, b: Rect): number {
+export function intersectArea(a: Rectangle, b: Rectangle): number {
     const left = Math.max(a.left, b.left);
     const right = Math.min(a.right, b.right);
     const top = Math.max(a.top, b.top);
@@ -89,7 +89,7 @@ export function intersectArea(a: Rect, b: Rect): number {
     return 0;
 }
 
-export function expand(r: Rect, x: number): Rect {
+export function expand(r: Rectangle, x: number): Rectangle {
     return rect(
         r.left - x,
         r.top - x,

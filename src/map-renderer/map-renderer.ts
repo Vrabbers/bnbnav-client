@@ -1,4 +1,6 @@
+import type { MapTree, Node } from "../map-data/map-tree";
 import { modulo } from "../math/math-helpers";
+import * as rect from "../math/rectangle";
 import { vec2 } from "../math/vector2";
 import * as vector2 from "../math/vector2";
 import { MapController } from "./map-controller";
@@ -23,8 +25,9 @@ export class MapRenderer {
     private gridSideLength = BASE_GRID_SIDE_LENGTH;
     private gridWidth = 0;
     private gridHeight = 0;
+    tree;
 
-    constructor(canvas: HTMLCanvasElement) {
+    constructor(canvas: HTMLCanvasElement, tree: MapTree<string>) {
         this.canvas = canvas;
         this.width = canvas.clientWidth;
         this.height = canvas.clientHeight;
@@ -37,6 +40,7 @@ export class MapRenderer {
         this.controller.connect();
         this.resObv = new ResizeObserver(this.resizeCanvas.bind(this));
         this.resObv.observe(this.canvas);
+        this.tree = tree;
     }
 
     private resizeGrid() {
@@ -123,22 +127,42 @@ export class MapRenderer {
                 //     ctx.drawImage(entry.image, 0, 0, 501, 501, firstX + i * this.gridSideLength, firstY + j * this.gridSideLength, correctedSideLength, correctedSideLength);
                 // }
                 ctx.fillStyle = `rgb(${Math.floor((x * 255) / this.gridWidth).toString()} ${Math.floor((y * 255) / this.gridHeight).toString()} 127)`;
-                ctx.fillRect(
-                    first.x + i * this.gridSideLength,
-                    first.y + j * this.gridSideLength,
-                    correctedSideLength,
-                    correctedSideLength,
-                );
-                ctx.fillStyle = "white";
-                ctx.fillText(
-                    `[${(entry.x * this.gridSideLength).toString()},${(entry.z * this.gridSideLength).toString()}]`,
-                    first.x + i * this.gridSideLength,
-                    first.y + j * this.gridSideLength,
-                );
+                // ctx.fillRect(
+                //     first.x + i * this.gridSideLength,
+                //     first.y + j * this.gridSideLength,
+                //     correctedSideLength,
+                //     correctedSideLength,
+                // );
+                // ctx.fillStyle = "white";
+                // ctx.fillText(
+                //     `[${(entry.x * this.gridSideLength).toString()},${(entry.z * this.gridSideLength).toString()}]`,
+                //     first.x + i * this.gridSideLength,
+                //     first.y + j * this.gridSideLength,
+                // );
                 x = (x + 1) % this.gridWidth;
             }
             y = (y + 1) % this.gridHeight;
         }
+
+
+        function tree(n: Node<string>, level:number) {
+            const r = n.bound;
+            if (!n.isLeaf) {
+                for (const child of n.items) {
+                    tree(child as Node<string>, level + 1);
+                }
+            } else {
+                ctx.strokeStyle = "cornflowerblue";
+                for (const child of n.items) {
+                    const r2 = child.bound;
+                    ctx.strokeRect(r2.left, r2.top, rect.width(r2), rect.height(r2));
+                }
+            }
+            ctx.strokeStyle = `hsl(${(level * 25).toString()} 100% 50%)`;
+            ctx.strokeRect(r.left, r.top, rect.width(r), rect.height(r));
+        }
+
+        tree(this.tree.root!, 0);
 
 
         ctx.restore();
