@@ -1,73 +1,72 @@
-export function vec2(x: number, y: number): Vector2 {
-    return new Vector2(x, y);
-}
-
-export class Vector2 {
+export interface Vector2 {
     readonly x: number;
     readonly y: number;
+}
 
-    constructor(x: number, y: number) {
-        this.x = x;
-        this.y = y;
-    }
+export function vec2(x: number, y: number): Vector2 {
+    return { x: x, y: y };
+}
 
-    add(other: Vector2): Vector2 {
-        return vec2(this.x + other.x, this.y + other.y);
-    }
+export function add(a: Vector2, b: Vector2): Vector2 {
+    return vec2(a.x + b.x, a.y + b.y);
+}
 
-    sub(other: Vector2): Vector2 {
-        return vec2(this.x - other.x, this.y - other.y);
-    }
+export function sub(a: Vector2, b: Vector2): Vector2 {
+    return vec2(a.x - b.x, a.y - b.y);
+}
 
-    dot(other: Vector2): number {
-        return this.x * other.x + this.y * other.y;
-    }
+export function dot(a: Vector2, b: Vector2): number {
+    return a.x * b.x + a.y * b.y;
+}
 
-    mul(scalar: number): Vector2 {
-        return vec2(this.x * scalar, this.y * scalar);
-    }
+export function mul(vector: Vector2, scalar: number): Vector2 {
+    return vec2(vector.x * scalar, vector.y * scalar);
+}
 
-    div(scalar: number): Vector2 {
-        return vec2(this.x / scalar, this.y / scalar);
-    }
+export function div(vector: Vector2, scalar: number): Vector2 {
+    return vec2(vector.x / scalar, vector.y / scalar);
+}
 
-    static distance(a: Vector2, b: Vector2): number {
-        return Math.sqrt(this.distanceSquared(a, b));
-    }
+export function distance(a: Vector2, b: Vector2): number {
+    return Math.sqrt(distanceSquared(a, b));
+}
 
-    static distanceSquared(a: Vector2, b: Vector2): number {
-        return (b.x - a.x) ** 2 + (b.y - a.y) ** 2;
-    }
+export function distanceSquared(a: Vector2, b: Vector2): number {
+    return (b.x - a.x) ** 2 + (b.y - a.y) ** 2;
+}
 
-    static equals(a: Vector2, b: Vector2): boolean {
-        return a.x === b.x && a.y === b.y;
-    }
+export function equals(a: Vector2, b: Vector2): boolean {
+    return a.x === b.x && a.y === b.y;
+}
 
-    length(): number {
-        return Math.sqrt(this.lengthSquared());
-    }
+export function length(a: Vector2): number {
+    return Math.sqrt(lengthSquared(a));
+}
 
-    lengthSquared(): number {
-        return this.x * this.x + this.y * this.y;
-    }
+export function lengthSquared(a: Vector2): number {
+    return a.x * a.x + a.y * a.y;
+}
 
-    normalize(): Vector2 {
-        const len = this.length();
-        if (len === 0) {
-            throw new RangeError("Cannot normalize a zero vector");
-        }
-        return this.div(len);
+export function normalize(a: Vector2): Vector2 {
+    const len = length(a);
+    if (len === 0) {
+        throw new RangeError("Cannot normalize a zero vector");
     }
+    return div(a, len);
+}
 
-    negate(): Vector2 {
-        return vec2(-this.x, -this.y);
-    }
+export function negate(a: Vector2): Vector2 {
+    return vec2(-a.x, -a.y);
+}
 
-    toString(): string {
-        return `vec2(${this.x.toString()}, ${this.y.toString()})`;
-    }
+export function toString(a: Vector2): string {
+    return `(${a.x.toString()}, ${a.y.toString()})`;
+}
 
-    map(fn: (x: number) => number): Vector2 {
-        return vec2(fn(this.x), fn(this.y));
-    }
+export function floor(a: Vector2): Vector2 {
+    return vec2(Math.floor(a.x), Math.floor(a.y));
+}
+
+export function ceil(a: Vector2): Vector2 {
+    return vec2(Math.ceil(a.x), Math.ceil(a.y));
 }

@@ -2,19 +2,21 @@ import "./index.css";
 import App from "./App.tsx";
 import { render } from "preact";
 import { MapRenderer } from "./map-renderer/map-renderer.ts";
-import { type JsonMapData } from "./map-data/json-types.ts";
+import { collectMapData, type JsonMapData } from "./map-data/map-types.ts";
+import { MapGraph } from "./map-data/map-graph.ts";
 
-const domMap = document.getElementById("decapitatedCanvas");
 
-if (!(domMap instanceof HTMLCanvasElement)) {
-    throw new Error("Couldn't find map canvas!");
-}
 
-/*
-const data = await fetch("https://bnbnav.aircs.racing/api/data");
-const json = await data.json() as JsonMapData;
+const resp = await fetch("https://bnbnav.aircs.racing/api/data");
+const data = collectMapData(await resp.json() as JsonMapData);
+console.log(data);
+const graph = new MapGraph();
+data.nodes.forEach((_v, k) => { graph.insertNode(k) });
+data.edges.forEach((v) => { graph.insertEdge(v) });
+console.log(graph);
 
-*/
+
+const domMap = document.getElementById("decapitatedCanvas") as HTMLCanvasElement;
 const map = new MapRenderer(domMap);
 console.log(map);
 render(<App />, document.getElementById("root")!);

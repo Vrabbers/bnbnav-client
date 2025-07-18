@@ -1,35 +1,44 @@
-export type JsonAnnotation = unknown;
-export type JsonLandmark = unknown;
-export interface JsonNode {
+export type Annotation = object;
+export type Landmark = object;
+
+export interface Node {
     x: number;
     y: number;
     z: number;
     world: string;
 }
-export interface JsonRoad {
+
+export type NodeId = string;
+
+export interface Road {
     name: string;
     type: string;
 }
-export interface JsonEdge {
+
+export type RoadId = string;
+
+export interface Edge {
     road: string;
     node1: string;
     node2: string;
 }
 
+export type EdgeId = string;
+
 export interface JsonMapData {
-    annotations: Record<string, JsonAnnotation>;
-    landmarks: Record<string, JsonLandmark>;
-    nodes: Record<string, JsonNode>;
-    roads: Record<string, JsonRoad>;
-    edges: Record<string, JsonEdge>;
+    annotations: Record<string, Annotation>;
+    landmarks: Record<string, Landmark>;
+    nodes: Record<NodeId, Node>;
+    roads: Record<RoadId, Road>;
+    edges: Record<EdgeId, Edge>;
 }
 
 export interface MapData {
-    annotations: Map<string, JsonAnnotation>;
-    landmarks: Map<string, JsonLandmark>;
-    nodes: Map<string, JsonNode>;
-    roads: Map<string, JsonRoad>;
-    edges: Map<string, JsonEdge>;
+    annotations: Map<string, Annotation>;
+    landmarks: Map<string, Landmark>;
+    nodes: Map<NodeId, Node>;
+    roads: Map<RoadId, Road>;
+    edges: Map<EdgeId, Edge>;
 }
 
 export function collectMapData(json: JsonMapData): MapData {
