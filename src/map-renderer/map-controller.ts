@@ -1,10 +1,11 @@
-import { Vector2, vec2 } from "../math/vector2";
+import { type Vector2, vec2 } from "../math/vector2";
+import * as vector2 from "../math/vector2";
 import type { MapState } from "./map-state";
 
 export class MapController {
-    private canvas: HTMLCanvasElement;
-    private state: MapState;
-    private update: () => void;
+    private readonly canvas: HTMLCanvasElement;
+    private readonly state: MapState;
+    private readonly update: () => void;
 
     private panning = false;
     private panFirstMouse: Vector2 = vec2(0, 0);
@@ -46,10 +47,9 @@ export class MapController {
 
     private mouseMove(evt: MouseEvent) {
         if (this.panning) {
-            const delta = vec2(evt.x, evt.y)
-                .sub(this.panFirstMouse)
-                .div(this.state.scale);
-            this.state.pan = this.panFirstPan.add(delta);
+            const delta = vector2.sub(vec2(evt.x, evt.y), this.panFirstMouse);
+            const scaledDelta = vector2.div(delta, this.state.scale);
+            this.state.pan = vector2.add(this.panFirstPan, scaledDelta);
             this.state.updateMatrices();
             this.update();
         }

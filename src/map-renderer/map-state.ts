@@ -1,30 +1,31 @@
 import { clamp } from "../math/math-helpers";
-import * as matrix from "../math/matrix3x2";
+import * as matrix3x2 from "../math/matrix3x2";
 import { type Matrix3x2 } from "../math/matrix3x2";
-import { vec2, Vector2 } from "../math/vector2";
+import { vec2, type Vector2 } from "../math/vector2";
+import * as vector2 from "../math/vector2";
 
 export class MapState {
     pan: Vector2 = vec2(0, 0);
-    scale = 1.5;
+    scale = 1;
 
-    transform: Matrix3x2 = matrix.identity();
-    inverseTransform: Matrix3x2 = matrix.identity();
+    transform: Matrix3x2 = matrix3x2.identity();
+    inverseTransform: Matrix3x2 = matrix3x2.identity();
 
     constructor() {
         this.updateMatrices();
     }
 
     updateMatrices() {
-        this.transform = matrix.translateScale(this.scale, this.pan);
-        this.inverseTransform = matrix.inverse(this.transform);
+        this.transform = matrix3x2.translateScale(this.scale, this.pan);
+        this.inverseTransform = matrix3x2.inverse(this.transform);
     }
 
     toScreen(point: Vector2) {
-        return matrix.multiplyVector(this.transform, point);
+        return matrix3x2.multiplyVector(this.transform, point);
     }
 
     toWorld(point: Vector2) {
-        return matrix.multiplyVector(this.inverseTransform, point);
+        return matrix3x2.multiplyVector(this.inverseTransform, point);
     }
 
     zoomAt(point: Vector2, newScale: number) {
@@ -38,9 +39,9 @@ export class MapState {
         this.updateMatrices();
 
         const worldPosAfter = this.toWorld(point);
-        const error = worldPosAfter.sub(worldPosBefore);
+        const error = vector2.sub(worldPosAfter, worldPosBefore);
 
-        this.pan = this.pan.add(error);
+        this.pan = vector2.add(this.pan, error);
         this.updateMatrices();
     }
 }

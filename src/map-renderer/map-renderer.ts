@@ -1,5 +1,6 @@
 import { modulo } from "../math/math-helpers";
 import { vec2 } from "../math/vector2";
+import * as vector2 from "../math/vector2";
 import { MapController } from "./map-controller";
 import { MapState } from "./map-state";
 
@@ -12,9 +13,9 @@ interface GridBin {
 const BASE_GRID_SIDE_LENGTH = 512;
 
 export class MapRenderer {
-    private canvas: HTMLCanvasElement;
-    private state: MapState;
-    private controller: MapController;
+    private readonly canvas: HTMLCanvasElement;
+    private readonly state: MapState;
+    private readonly controller: MapController;
     private width: number;
     private height: number;
     private resObv: ResizeObserver;
@@ -80,12 +81,12 @@ export class MapRenderer {
         ctx.font = `${(16 / this.state.scale).toString()}px sans-serif`;
         ctx.transform(...this.state.transform);
 
-        const topRight = this.state.toWorld(vec2(0, 0));
-        const bottomLeft = this.state.toWorld(vec2(this.width, this.height));
-        const start = topRight.div(this.gridSideLength).map(Math.floor);
-        const end = bottomLeft.div(this.gridSideLength).map(Math.ceil);
-        const diff = end.sub(start);
-        const first = start.mul(this.gridSideLength);
+        const topLeft = this.state.toWorld(vec2(0, 0));
+        const bottomRight = this.state.toWorld(vec2(this.width, this.height));
+        const start = vector2.floor(vector2.div(topLeft, this.gridSideLength));
+        const end = vector2.ceil(vector2.div(bottomRight, this.gridSideLength));
+        const diff = vector2.sub(end, start);
+        const first = vector2.mul(start, this.gridSideLength);
 
         const modX = modulo(start.x, this.gridWidth);
 
@@ -142,7 +143,7 @@ export class MapRenderer {
 
         ctx.restore();
         ctx.fillText(`dt: ${dt.toString()} ms / fps: ${(1000 / dt).toString()}`, 24, 24);
-        ctx.fillText(`${this.state.pan.toString()} / ${this.state.scale.toString()}`, 24, 48);
+        ctx.fillText(`${vector2.toString(this.state.pan)} / ${this.state.scale.toString()}`, 24, 48);
     }
 
     private resizeCanvas() {
