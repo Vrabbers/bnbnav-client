@@ -24,6 +24,31 @@ for (const [key, value] of data.edges.entries()) {
     tree.insert({entry: key, bound: bound});
 }
 
+const small = [];
+const big = [];
+for (let i = 0; i < 5000; i++) {
+    const x = Math.round(Math.random() * 2000) - 1000;
+    const y = Math.round(Math.random() * 2000) - 1000;
+    small.push(rect(x, y, x + 10, y + 100));
+    big.push(rect(x, y, x + 1000, y + 1000));
+}
+
+console.time("small");
+for (const r of small) {
+    let i = 0;
+    for (const q of tree.search(r));
+        i++;
+}
+console.timeEnd("small");
+
+console.time("big");
+for (const r of big) {
+    let i = 0;
+    for (const q of tree.search(r));
+        i++;
+}
+console.timeEnd("big");
+
 
 const domMap = document.getElementById("decapitatedCanvas") as HTMLCanvasElement;
 const map = new MapRenderer(domMap, tree, data);

@@ -2,8 +2,9 @@ import assert from "../assert";
 import { type Rectangle } from "../math/rectangle";
 import * as rectangle from "../math/rectangle";
 
-const MAX_IN_NODE = 32;
+const MAX_IN_NODE = 64;
 const MIN_IN_NODE = 2;
+const DISTRIBUTION_COUNT = MAX_IN_NODE - 2 * MIN_IN_NODE + 2;
 
 export interface Entry<T> {
     entry: T,
@@ -14,114 +15,89 @@ interface Bounded {
     bound: Rectangle
 }
 
-export interface Node<T> extends Bounded { 
-    isLeaf: boolean;
-    parent: Internal<T> | null;
-    items: (Node<T> | Entry<T>)[];
-    bound: Rectangle,
-}
-
-interface Leaf<T> extends Node<T> {
+interface Leaf<T> extends Bounded {
     isLeaf: true;
     parent: Internal<T> | null;
     items: Entry<T>[];
     bound: Rectangle,
 }
 
-interface Internal<T> extends Node<T> {
+interface Internal<T> extends Bounded {
     isLeaf: false;
     parent: Internal<T> | null;
     items: Node<T>[];
     bound: Rectangle,
 }
 
+export type Node<T> = Internal<T> | Leaf<T>;
+
 function isLeaf<T>(n: Node<T>): n is Leaf<T> {
     return n.isLeaf;
-} 
+}
 
 function isInternal<T>(n: Node<T>): n is Internal<T> {
     return !n.isLeaf;
-} 
+}
+
+const X_AXIS_SELECTOR = [(r: Rectangle) => r.left, (r: Rectangle) => r.right] as const;
+const Y_AXIS_SELECTOR = [(r: Rectangle) => r.top, (r: Rectangle) => r.bottom] as const;
 
 export class MapTree<T> {
     root: Node<T> | null = null;
 
-    private split<N extends Node<T>>(node: N) : N {
-        let largestD = -Infinity;
-        let index1;
-        let index2;
+    
+    private split(node: Node<T>): Node<T> {
+        assert(node.items.length === MAX_IN_NODE + 1);
+        // Choose axis
+        let chosenSplitEdge: typeof X_AXIS_SELECTOR[0];
+        let chosenSplitIndex: number;
+        let chosenSplitSemiperimeterSum = Infinity;
+        for (const axis of [X_AXIS_SELECTOR, Y_AXIS_SELECTOR]) {
+            let semiperimeterSum = 0;
+            let distributionArea = Infinity;
+            let distributionOverlap = Infinity;
+            let distributionEdge: typeof axis[0];
+            let distributionIndex: number;
 
-        for (const [i1, e1] of node.items.entries()) {
-            for (const [i2, e2] of node.items.entries()) {
-                if (i1 === i2) continue;
-                const unionArea = rectangle.area(rectangle.union(e1.bound, e2.bound));
-                const d = unionArea - rectangle.area(e1.bound) - rectangle.area(e2.bound);
-                if (d > largestD) {
-                    largestD = d;
-                    [index1, index2] = [i1, i2];
+            for (const edge of axis) {
+                node.items.sort((a, b) => edge(a.bound) - edge(b.bound));
+
+                const rects = node.items.map(x => x.bound);
+                for (let k = 0; k < DISTRIBUTION_COUNT; k++) {
+                    const region1 = rectangle.unionMany(rects.slice(0, MIN_IN_NODE + k));
+                    const region2 = rectangle.unionMany(rects.slice(MIN_IN_NODE + k));
+                    semiperimeterSum += rectangle.semiperimeter(region1) + rectangle.semiperimeter(region2);
+                    const area = rectangle.area(region1) + rectangle.area(region2);
+                    const overlap = rectangle.intersectionArea(region1, region2);
+
+                    if (overlap < distributionOverlap ||
+                        overlap === distributionOverlap && area > distributionArea) {
+                        distributionEdge = edge;
+                        distributionIndex = MIN_IN_NODE + k;
+                        distributionOverlap = overlap;
+                        distributionArea = area;
+                    }
                 }
             }
-        }
-        assert(typeof index1 === "number" && typeof index2 === "number");
 
-        const group1 = [node.items[index1]];
-        const group2 = [node.items[index2]];
-        const items = node.items.filter((_v, i) => i !== index1 && i !== index2 );
-        
-        let bound1 = group1[0].bound;
-        let bound2 = group2[0].bound;
-        let area1 = rectangle.area(bound1);
-        let area2 = rectangle.area(bound2);
-        
-        const differences = items.map((e) => {
-            const d1 = rectangle.area(rectangle.union(bound1, e.bound)) - area1;
-            const d2 = rectangle.area(rectangle.union(bound2, e.bound)) - area2;
-            return { entry: e, d: Math.abs(d2 - d1) };
-        }).sort((a, b) => a.d - b.d).reverse();
-
-        for (const [index, { entry, d: _d }] of differences.entries()) {
-            // Values given that we added the rectangle to each one.
-            const b1 = rectangle.union(bound1, entry.bound);
-            const a1 = rectangle.area(b1);
-            const d1 = a1 - area1;
-            const b2 = rectangle.union(bound2, entry.bound)
-            const a2 = rectangle.area(b2);
-            const d2 = a2 - area2;
-
-            if (d1 < d2 || (d1 === d2 && area1 < area2) || (area1 === area2 && group1.length < group2.length)) {
-                bound1 = b1;
-                area1 = a1;
-                group1.push(entry);
-            } else {
-                bound2 = b2;
-                area2 = a2;
-                group2.push(entry);
-            }
-
-            const itemsRemaining = (differences.length - index + 1);
-            if (itemsRemaining === MIN_IN_NODE) {
-                if (group1.length < MIN_IN_NODE) {
-                    differences.forEach(d => group1.push(d.entry));
-                    bound1 = rectangle.unionMany(group1.map(x => x.bound));
-                    break;
-                } else if (group2.length < MIN_IN_NODE) {
-                    differences.forEach(d => group2.push(d.entry));
-                    bound2 = rectangle.unionMany(group2.map(x => x.bound));
-                    break;
-                }
+            if (semiperimeterSum < chosenSplitSemiperimeterSum) {
+                chosenSplitSemiperimeterSum = semiperimeterSum;
+                chosenSplitEdge = distributionEdge!;
+                chosenSplitIndex = distributionIndex!;
             }
         }
 
-        const newNode = {
+        // Reproduce result
+        node.items.sort((a, b) => chosenSplitEdge(a.bound) - chosenSplitEdge(b.bound));
+        const newItems = node.items.splice(chosenSplitIndex!);
+        node.bound = rectangle.unionMany(node.items.map(x => x.bound));
+        const newBound = rectangle.unionMany(newItems.map(x => x.bound));
+        return {
             isLeaf: node.isLeaf,
             parent: node.parent,
-            items: group2,
-            bound: bound2,
-        };
-        node.items = group1;
-        node.bound = bound1;
-
-        return newNode as N;
+            bound: newBound,
+            items: newItems,
+        } as typeof node;
     }
 
     private adjustTree(node: Node<T>, nodeSplit: Node<T> | undefined) {
@@ -179,27 +155,11 @@ export class MapTree<T> {
 
     }
 
-    private *query(n: Node<T>, rect: Rectangle) : Generator<Entry<T>, void, void> {
-        if (isInternal(n)) {
-            for (const c of n.items) {
-                if (rectangle.intersects(c.bound, rect)) {
-                    yield* this.query(c, rect);
-                }
-            }
-        } else {
-            for (const c of n.items) {
-                if (rectangle.intersects(c.bound, rect)) {
-                    yield c as Entry<T>;
-                }
-            }
-        }
-    }
-
     *search(rect: Rectangle): Generator<Entry<T>, void, void> {
         if (this.root === null)
             return;
 
-        yield* this.query(this.root, rect);
+        yield* query(this.root, rect);
     }
 }
 
@@ -235,3 +195,20 @@ function chooseSubtree<T>(node: Node<T>, rect: Rectangle): Node<T> {
 
     return leastEntry;
 }
+
+function* query<T>(n: Node<T>, rect: Rectangle): Generator<Entry<T>, void, void> {
+    if (isInternal(n)) {
+        for (const c of n.items) {
+            if (rectangle.intersects(c.bound, rect)) {
+                yield* query(c, rect);
+            }
+        }
+    } else {
+        for (const c of n.items) {
+            if (rectangle.intersects(c.bound, rect)) {
+                yield c;
+            }
+        }
+    }
+}
+

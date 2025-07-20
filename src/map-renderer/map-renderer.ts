@@ -130,18 +130,18 @@ export class MapRenderer {
                 //     ctx.drawImage(entry.image, 0, 0, 501, 501, firstX + i * this.gridSideLength, firstY + j * this.gridSideLength, correctedSideLength, correctedSideLength);
                 // }
                 ctx.fillStyle = `rgb(${Math.floor((x * 255) / this.gridWidth).toString()} ${Math.floor((y * 255) / this.gridHeight).toString()} 127)`;
-                // ctx.fillRect(
-                //     first.x + i * this.gridSideLength,
-                //     first.y + j * this.gridSideLength,
-                //     correctedSideLength,
-                //     correctedSideLength,
-                // );
-                // ctx.fillStyle = "white";
-                // ctx.fillText(
-                //     `[${(entry.x * this.gridSideLength).toString()},${(entry.z * this.gridSideLength).toString()}]`,
-                //     first.x + i * this.gridSideLength,
-                //     first.y + j * this.gridSideLength,
-                // );
+                ctx.fillRect(
+                    first.x + i * this.gridSideLength,
+                    first.y + j * this.gridSideLength,
+                    correctedSideLength,
+                    correctedSideLength,
+                );
+                ctx.fillStyle = "white";
+                ctx.fillText(
+                    `[${(entry.x * this.gridSideLength).toString()},${(entry.z * this.gridSideLength).toString()}]`,
+                    first.x + i * this.gridSideLength,
+                    first.y + j * this.gridSideLength,
+                );
                 x = (x + 1) % this.gridWidth;
             }
             y = (y + 1) % this.gridHeight;

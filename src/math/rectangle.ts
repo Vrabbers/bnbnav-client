@@ -102,3 +102,7 @@ export function expand(r: Rectangle, x: number): Rectangle {
     );
 }
 
+export function semiperimeter(r: Rectangle): number {
+    return (r.right - r.left) + (r.bottom - r.top);
+}
+
