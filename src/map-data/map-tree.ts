@@ -7,6 +7,8 @@ const MAX_IN_NODE = 64;
 const MIN_IN_NODE = 2;
 const DISTRIBUTION_COUNT = MAX_IN_NODE - 2 * MIN_IN_NODE + 2;
 const REINSERT_P = 20;
+const CHOOSE_SUBTREE_P = 32;
+
 
 export interface Entry<T> {
     entry: T,
@@ -234,8 +236,6 @@ function chooseLeaf<T>(tree: Node<T>, rect: Rectangle): Leaf<T> {
     return node;
 }
 
-const LEAST_P = 32;
-
 // Note: ensure kRect and rects[x].bound reference equality.
 function overlap(kRect: Rectangle, rects: Rectangle[]): number {
     let area = 0;
@@ -259,8 +259,8 @@ function chooseSubtree<T>(node: Node<T>, testRect: Rectangle): Node<T> {
 
         leastP.sort((a, b) => a[1] - b[1]);
 
-        if (leastP.length > LEAST_P)
-            leastP.splice(LEAST_P);
+        if (leastP.length > CHOOSE_SUBTREE_P)
+            leastP.splice(CHOOSE_SUBTREE_P);
 
         const rects = node.items.map(x => x.bound);
         const overlaps = leastP.map(e => overlap(e[0].bound, rects));
