@@ -49,6 +49,14 @@ export function union(a: Rectangle, b: Rectangle): Rectangle {
     );
 }
 
+export function unionArea(x: Rectangle, y: Rectangle) : number {
+    const l = Math.min(x.left, y.left);
+    const t = Math.min(x.top, y.top);
+    const r = Math.max(x.right, y.right);
+    const b = Math.max(x.bottom, y.bottom);
+    return (r - l) * (b - t);
+}
+
 export function unionMany(rects: Rectangle[]): Rectangle {
     let top = +Infinity;
     let left = +Infinity;

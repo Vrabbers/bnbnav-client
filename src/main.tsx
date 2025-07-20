@@ -8,14 +8,21 @@ import { MapTree } from "./map-data/map-tree.ts";
 import { expand, normalize, rect } from "./math/rectangle.ts";
 
 
-
+console.time("data download and collect");
 const resp = await fetch("https://bnbnav.aircs.racing/api/data");
 const data = collectMapData(await resp.json() as JsonMapData);
+console.timeEnd("data download and collect");
 console.log(data);
+
+console.time("build graph");
 const graph = new MapGraph();
 data.nodes.forEach((_v, k) => { graph.insertNode(k) });
 data.edges.forEach((v) => { graph.insertEdge(v) });
+console.timeEnd("build graph");
+
 console.log(graph);
+
+console.time("build tree");
 const tree = new MapTree<EdgeId>();
 for (const [key, value] of data.edges.entries()) {
     const n1 = data.nodes.get(value.node1)!;
@@ -23,6 +30,7 @@ for (const [key, value] of data.edges.entries()) {
     const bound = expand(normalize(rect(n1.x, n1.z, n2.x, n2.z)), 5);
     tree.insert({entry: key, bound: bound});
 }
+console.timeEnd("build tree");
 
 const small = [];
 const big = [];
