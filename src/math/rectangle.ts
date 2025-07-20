@@ -1,3 +1,5 @@
+import { vec2, type Vector2 } from "./vector2";
+
 export interface Rectangle {
     readonly left: number;
     readonly top: number;
@@ -114,3 +116,6 @@ export function semiperimeter(r: Rectangle): number {
     return (r.right - r.left) + (r.bottom - r.top);
 }
 
+export function center(r: Rectangle): Vector2 {
+    return vec2((r.left + r.right) * 0.5, (r.top + r.bottom) * 0.5);
+}
