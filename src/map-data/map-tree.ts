@@ -11,30 +11,30 @@ const CHOOSE_SUBTREE_P = 32;
 
 
 export interface Entry<T> {
-    entry: T,
-    bound: Rectangle
+    bound: Rectangle;
+    entry: T;
 }
 
 interface Leaf<T> {
     isLeaf: true;
     parent: Internal<T> | null;
     items: Entry<T>[];
-    bound: Rectangle,
+    bound: Rectangle;
 }
 
 interface Internal<T> {
     isLeaf: false;
     parent: Internal<T> | null;
     items: Node<T>[];
-    bound: Rectangle,
+    bound: Rectangle;
 }
 
 type Node<T> = Internal<T> | Leaf<T>;
 
-type Bounded<T> = Entry<T> | Node<T>
+type Bounded<T> = Entry<T> | Node<T>;
 
 function isEntry<T>(n: Bounded<T>): n is Entry<T> {
-    return "entry" in n
+    return "entry" in n;
 }
 
 function isNode<T>(n: Bounded<T>): n is Node<T> {
@@ -100,14 +100,14 @@ export class MapTree<T> {
         // If the level is not the root level and this is the first call of overflowTreatment in the given level
         // during the insertion of one data rectangle, then
         assert(node.items.length === MAX_IN_NODE + 1);
-        if (node !== this.root && first) {
-            // "this is the first call of overflowTreatment in the given level" 
-            // is guaranteed by reinsert calling insertAtLevel with false
-            this.reinsert(node);
-            return null;
-        } else {
-            return split(node);
-        }
+        // if (node !== this.root && first) {
+        //     // "this is the first call of overflowTreatment in the given level" 
+        //     // is guaranteed by reinsert calling insertAtLevel with false
+        //     this.reinsert(node);
+        //     return null;
+        // } else {
+        return split(node);
+        // }
     }
 
     private reinsert(node: Node<T>) {
@@ -259,8 +259,9 @@ function chooseSubtree<T>(node: Node<T>, testRect: Rectangle): Node<T> {
 
         leastP.sort((a, b) => a[1] - b[1]);
 
-        if (leastP.length > CHOOSE_SUBTREE_P)
+        if (leastP.length > CHOOSE_SUBTREE_P) {
             leastP.splice(CHOOSE_SUBTREE_P);
+        }
 
         const rects = node.items.map(x => x.bound);
         const overlaps = leastP.map(e => overlap(e[0].bound, rects));
@@ -272,19 +273,24 @@ function chooseSubtree<T>(node: Node<T>, testRect: Rectangle): Node<T> {
         let leastArea = rectangle.area(leastEntry.bound);
         for (const [i, [entry, entryAreaEnlarge]] of leastP.entries()) {
             const entryOverlapEnlarge = overlapEnlarges[i];
+
             if (entryOverlapEnlarge > leastOverlapEnlarge)
                 continue;
             if (entryOverlapEnlarge === leastOverlapEnlarge && entryAreaEnlarge > leastAreaEnlarge)
                 continue;
+
             const entryArea = rectangle.area(entry.bound);
+
             if (entryAreaEnlarge === leastAreaEnlarge && entryArea > leastArea)
                 continue;
+
             leastOverlapEnlarge = entryOverlapEnlarge;
             leastAreaEnlarge = entryAreaEnlarge;
             leastArea = entryArea;
             leastEntry = entry;
         }
         return leastEntry;
+
     } else {
         const enlarges = node.items.map(x => rectangle.unionArea(x.bound, testRect) - rectangle.area(x.bound));
         let lowestEnlarge = enlarges.pop()!;

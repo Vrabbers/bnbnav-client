@@ -2,7 +2,7 @@ import "./index.css";
 import App from "./App.tsx";
 import { render } from "preact";
 import { MapRenderer } from "./map-renderer/map-renderer.ts";
-import { collectMapData, type EdgeId, type JsonMapData } from "./map-data/map-types.ts";
+import { collectMapData, type JsonMapData } from "./map-data/map-types.ts";
 import { MapGraph } from "./map-data/map-graph.ts";
 import { MapTree } from "./map-data/map-tree.ts";
 import { expand, normalize, rect } from "./math/rectangle.ts";
@@ -30,6 +30,7 @@ for (const [key, value] of data.edges.entries()) {
     const bound = expand(normalize(rect(n1.x, n1.z, n2.x, n2.z)), 5);
     tree.insert({entry: key, bound: bound});
 }
+
 console.timeEnd("build tree");
 
 // const small = [];
