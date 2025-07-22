@@ -23,40 +23,41 @@ console.timeEnd("build graph");
 console.log(graph);
 
 console.time("build tree");
-const tree = new MapTree<EdgeId>();
+const stuff = [];
 for (const [key, value] of data.edges.entries()) {
     const n1 = data.nodes.get(value.node1)!;
     const n2 = data.nodes.get(value.node2)!;
-    const bound = expand(normalize(rect(n1.x, n1.z, n2.x, n2.z)), 5);
-    tree.insert({entry: key, bound: bound});
+    const bound = normalize(rect(n1.x, n1.z, n2.x, n2.z));
+    stuff.push({entry: key, bound: bound});
 }
+const tree = MapTree.fromItems<string>(stuff);
 
 console.timeEnd("build tree");
 
-// const small = [];
-// const big = [];
-// for (let i = 0; i < 5000; i++) {
-//     const x = Math.round(Math.random() * 2000) - 1000;
-//     const y = Math.round(Math.random() * 2000) - 1000;
-//     small.push(rect(x, y, x + 10, y + 100));
-//     big.push(rect(x, y, x + 1000, y + 1000));
-// }
+const small = [];
+const big = [];
+for (let i = 0; i < 5000; i++) {
+    const x = Math.round(Math.random() * 2000) - 1000;
+    const y = Math.round(Math.random() * 2000) - 1000;
+    small.push(rect(x, y, x + 100, y + 100));
+    big.push(rect(x, y, x + 1000, y + 1000));
+}
 
-// console.time("small");
-// for (const r of small) {
-//     let i = 0;
-//     for (const q of tree.search(r));
-//         i++;
-// }
-// console.timeEnd("small");
+console.time("small");
+for (const r of small) {
+    let i = 0;
+    for (const q of tree.search(r));
+        i++;
+}
+console.timeEnd("small");
 
-// console.time("big");
-// for (const r of big) {
-//     let i = 0;
-//     for (const q of tree.search(r));
-//         i++;
-// }
-// console.timeEnd("big");
+console.time("big");
+for (const r of big) {
+    let i = 0;
+    for (const q of tree.search(r));
+        i++;
+}
+console.timeEnd("big");
 
 
 const domMap = document.getElementById("decapitatedCanvas") as HTMLCanvasElement;

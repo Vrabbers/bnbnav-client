@@ -3,7 +3,7 @@ import { type Rectangle } from "../math/rectangle";
 import * as rectangle from "../math/rectangle";
 import { distanceSquared } from "../math/vector2";
 
-const MAX_IN_NODE = 64;
+const MAX_IN_NODE = 30;
 const MIN_IN_NODE = 2;
 const DISTRIBUTION_COUNT = MAX_IN_NODE - 2 * MIN_IN_NODE + 2;
 const REINSERT_P = 20;
@@ -51,6 +51,13 @@ function isInternal<T>(n: Node<T>): n is Internal<T> {
 
 export class MapTree<T> {
     private root: Node<T> | null = null;
+
+    static fromItems<T>(entries: Entry<T>[]): MapTree<T> {
+        const tree = new MapTree<T>();
+        const root = bulkInsert<T>(entries);
+        tree.root = root;
+        return tree;
+    }
 
     insert(entry: Entry<T>) {
         if (this.root === null) {
@@ -219,6 +226,59 @@ function split<T>(node: Node<T>): Node<T> {
         bound: newBound,
         items: newItems,
     } as typeof node;
+}
+
+function bulkInsert<T>(entries: Entry<T>[] | Node<T>[]): Node<T> {
+    // STR:
+    const pageCount = Math.ceil(entries.length / MAX_IN_NODE);
+    const s = Math.ceil(Math.sqrt(pageCount));
+    // sort by x-coord (sum gives center sort)
+    entries.sort((a, b) => (a.bound.left + a.bound.right) - (b.bound.left + b.bound.right));
+    const slices = [];
+    const slicesCount = s * MAX_IN_NODE;
+    for (let i = 0; i < entries.length; i += slicesCount) {
+        slices.push(
+            entries
+                .slice(i, i + slicesCount)
+                .sort((a, b) => (a.bound.top + a.bound.bottom) - (b.bound.top + b.bound.bottom))
+        );
+    }
+
+    const nodes: Node<T>[] = [];
+    for (const slice of slices) {
+        for (let i = 0; i < slice.length; i += MAX_IN_NODE) {
+            const node = slice.slice(i, i + MAX_IN_NODE)
+            const bound = rectangle.unionMany(node.map(x => x.bound));
+
+            if (isNode(node[0])) {
+                const parent: Internal<T> = {
+                    isLeaf: false,
+                    items: node as Node<T>[],
+                    bound: bound,
+                    parent: null,
+                }
+
+                nodes.push(parent);
+
+                for (const child of node as Node<T>[]) {
+                    child.parent = parent;
+                }
+            } else {
+                nodes.push({
+                    isLeaf: true,
+                    items: node as Entry<T>[],
+                    bound: bound,
+                    parent: null,
+                });
+            }
+        }
+    }
+    
+    if (nodes.length === 1) {
+        return nodes[0];
+    } else {
+        return bulkInsert(nodes);
+    }
 }
 
 function adjustTreeBounds<T>(node: Node<T>) {
