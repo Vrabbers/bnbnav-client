@@ -5,7 +5,7 @@ import { MapRenderer } from "./map-renderer/map-renderer.ts";
 import { collectMapData, type JsonMapData } from "./map-data/map-types.ts";
 import { MapGraph } from "./map-data/map-graph.ts";
 import { MapTree } from "./map-data/map-tree.ts";
-import { expand, normalize, rect } from "./math/rectangle.ts";
+import { normalize, rect } from "./math/rectangle.ts";
 
 
 console.time("data download and collect");

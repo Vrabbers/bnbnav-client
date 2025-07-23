@@ -3,7 +3,7 @@ import { type Rectangle } from "../math/rectangle";
 import * as rectangle from "../math/rectangle";
 import { distanceSquared } from "../math/vector2";
 
-const MAX_IN_NODE = 30;
+const MAX_IN_NODE = 32;
 const MIN_IN_NODE = 2;
 const DISTRIBUTION_COUNT = MAX_IN_NODE - 2 * MIN_IN_NODE + 2;
 const REINSERT_P = 20;
@@ -59,19 +59,18 @@ export class MapTree<T> {
         return tree;
     }
 
-    insert(entry: Entry<T>) {
+    insert(entry: T, bound: Rectangle) {
         if (this.root === null) {
             this.root = {
                 parent: null,
                 isLeaf: true,
-                items: [entry],
-                bound: entry.bound,
+                items: [{entry, bound}],
+                bound: bound,
             }
-            return;
+        } else {
+            const leaf = chooseLeaf(this.root, bound);
+            this.insertAt(leaf, { entry, bound }, true);
         }
-
-        const leaf = chooseLeaf(this.root, entry.bound);
-        this.insertAt(leaf, entry, true);
     }
 
     *search(rect: Rectangle): Generator<Entry<T>, void, void> {
@@ -98,23 +97,28 @@ export class MapTree<T> {
     }
 
     private insertAtLevel(node: Node<T>, entry: Bounded<T>, first: boolean) {
-        assert(node.parent !== null);
-        const sibling = chooseSubtree(node.parent, entry.bound);
-        this.insertAt(sibling, entry, first);
+        assert(node.parent !== null && this.root !== null);
+        let movingUp = node;
+        let movingDown = this.root;
+        while (movingUp.parent !== null) {
+            movingUp = movingUp.parent;
+            movingDown = chooseSubtree(movingDown, entry.bound); // Moves up 
+        }
+        this.insertAt(movingDown, entry, first);
     }
 
     private overflowTreatment(node: Node<T>, first: boolean): Node<T> | null {
         // If the level is not the root level and this is the first call of overflowTreatment in the given level
         // during the insertion of one data rectangle, then
         assert(node.items.length === MAX_IN_NODE + 1);
-        // if (node !== this.root && first) {
-        //     // "this is the first call of overflowTreatment in the given level" 
-        //     // is guaranteed by reinsert calling insertAtLevel with false
-        //     this.reinsert(node);
-        //     return null;
-        // } else {
-        return split(node);
-        // }
+        if (node !== this.root && first) {
+            // "this is the first call of overflowTreatment in the given level" 
+            // is guaranteed by reinsert calling insertAtLevel with false
+            this.reinsert(node);
+            return null;
+        } else {
+            return split(node);
+        }
     }
 
     private reinsert(node: Node<T>) {
@@ -232,20 +236,21 @@ function bulkInsert<T>(entries: Entry<T>[] | Node<T>[]): Node<T> {
     // STR:
     const pageCount = Math.ceil(entries.length / MAX_IN_NODE);
     const s = Math.ceil(Math.sqrt(pageCount));
+    const slices = [];
+    const sliceSize = s * MAX_IN_NODE;
     // sort by x-coord (sum gives center sort)
     entries.sort((a, b) => (a.bound.left + a.bound.right) - (b.bound.left + b.bound.right));
-    const slices = [];
-    const slicesCount = s * MAX_IN_NODE;
-    for (let i = 0; i < entries.length; i += slicesCount) {
+    for (let i = 0; i < entries.length; i += sliceSize) {
         slices.push(
-            entries
-                .slice(i, i + slicesCount)
-                .sort((a, b) => (a.bound.top + a.bound.bottom) - (b.bound.top + b.bound.bottom))
+            entries.slice(i, i + sliceSize)
         );
     }
 
     const nodes: Node<T>[] = [];
     for (const slice of slices) {
+        // Sort slice by y centers
+        slice.sort((a, b) => (a.bound.top + a.bound.bottom) - (b.bound.top + b.bound.bottom));
+        // Create nodes (slices of the slice).
         for (let i = 0; i < slice.length; i += MAX_IN_NODE) {
             const node = slice.slice(i, i + MAX_IN_NODE)
             const bound = rectangle.unionMany(node.map(x => x.bound));
