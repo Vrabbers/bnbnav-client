@@ -1,7 +1,7 @@
 import assert from "../assert";
-import { type Rectangle } from "../math/rectangle";
 import * as rectangle from "../math/rectangle";
-import { distanceSquared } from "../math/vector2";
+import {type Rectangle} from "../math/rectangle";
+import {distanceSquared} from "../math/vector2";
 
 const MAX_IN_NODE = 32;
 const MIN_IN_NODE = 2;
@@ -25,37 +25,36 @@ interface Leaf<T> {
 interface Internal<T> {
     isLeaf: false;
     parent: Internal<T> | null;
-    items: Node<T>[];
+    items: TreeNode<T>[];
     bound: Rectangle;
 }
 
-type Node<T> = Internal<T> | Leaf<T>;
+type TreeNode<T> = Internal<T> | Leaf<T>;
 
-type Bounded<T> = Entry<T> | Node<T>;
+type Bounded<T> = Entry<T> | TreeNode<T>;
 
 function isEntry<T>(n: Bounded<T>): n is Entry<T> {
     return "entry" in n;
 }
 
-function isNode<T>(n: Bounded<T>): n is Node<T> {
+function isNode<T>(n: Bounded<T>): n is TreeNode<T> {
     return "isLeaf" in n;
 }
 
-function isLeaf<T>(n: Node<T>): n is Leaf<T> {
+function isLeaf<T>(n: TreeNode<T>): n is Leaf<T> {
     return n.isLeaf;
 }
 
-function isInternal<T>(n: Node<T>): n is Internal<T> {
+function isInternal<T>(n: TreeNode<T>): n is Internal<T> {
     return !n.isLeaf;
 }
 
 export class MapTree<T> {
-    private root: Node<T> | null = null;
+    private root: TreeNode<T> | null = null;
 
     static fromItems<T>(entries: Entry<T>[]): MapTree<T> {
         const tree = new MapTree<T>();
-        const root = bulkInsert<T>(entries);
-        tree.root = root;
+        tree.root = bulkInsert<T>(entries);
         return tree;
     }
 
@@ -80,7 +79,7 @@ export class MapTree<T> {
         yield* query(this.root, rect);
     }
 
-    private insertAt(node: Node<T>, entry: Bounded<T>, first: boolean) {
+    private insertAt(node: TreeNode<T>, entry: Bounded<T>, first: boolean) {
         if (isLeaf(node)) {
             assert(isEntry(entry));
             node.items.push(entry);
@@ -96,7 +95,7 @@ export class MapTree<T> {
         this.adjustTree(node, split, first);
     }
 
-    private insertAtLevel(node: Node<T>, entry: Bounded<T>, first: boolean) {
+    private insertAtLevel(node: TreeNode<T>, entry: Bounded<T>, first: boolean) {
         assert(node.parent !== null && this.root !== null);
         let movingUp = node;
         let movingDown = this.root;
@@ -107,7 +106,7 @@ export class MapTree<T> {
         this.insertAt(movingDown, entry, first);
     }
 
-    private overflowTreatment(node: Node<T>, first: boolean): Node<T> | null {
+    private overflowTreatment(node: TreeNode<T>, first: boolean): TreeNode<T> | null {
         // If the level is not the root level and this is the first call of overflowTreatment in the given level
         // during the insertion of one data rectangle, then
         assert(node.items.length === MAX_IN_NODE + 1);
@@ -121,7 +120,7 @@ export class MapTree<T> {
         }
     }
 
-    private reinsert(node: Node<T>) {
+    private reinsert(node: TreeNode<T>) {
         assert(node.items.length === MAX_IN_NODE + 1);
         // RI1: For all M + 1 entries of a node N, compute the distance between the centers of their rectangles and the
         // center of the bounding rectangle of N
@@ -146,7 +145,7 @@ export class MapTree<T> {
         }
     }
 
-    private adjustTree(node: Node<T>, nodeSplit: Node<T> | null, first: boolean) {
+    private adjustTree(node: TreeNode<T>, nodeSplit: TreeNode<T> | null, first: boolean) {
         while (node.parent !== null) {
             let parentSplit = null;
             node.parent.bound = rectangle.union(node.parent.bound, node.bound);
@@ -178,7 +177,7 @@ export class MapTree<T> {
 const X_AXIS_SELECTOR = [(r: Rectangle) => r.left, (r: Rectangle) => r.right] as const;
 const Y_AXIS_SELECTOR = [(r: Rectangle) => r.top, (r: Rectangle) => r.bottom] as const;
 
-function split<T>(node: Node<T>): Node<T> {
+function split<T>(node: TreeNode<T>): TreeNode<T> {
     assert(node.items.length === MAX_IN_NODE + 1);
     // Choose axis
     let chosenSplitEdge: typeof X_AXIS_SELECTOR[0];
@@ -232,7 +231,7 @@ function split<T>(node: Node<T>): Node<T> {
     } as typeof node;
 }
 
-function bulkInsert<T>(entries: Entry<T>[] | Node<T>[]): Node<T> {
+function bulkInsert<T>(entries: Entry<T>[] | TreeNode<T>[]): TreeNode<T> {
     // STR:
     const pageCount = Math.ceil(entries.length / MAX_IN_NODE);
     const s = Math.ceil(Math.sqrt(pageCount));
@@ -246,7 +245,7 @@ function bulkInsert<T>(entries: Entry<T>[] | Node<T>[]): Node<T> {
         );
     }
 
-    const nodes: Node<T>[] = [];
+    const nodes: TreeNode<T>[] = [];
     for (const slice of slices) {
         // Sort slice by y centers
         slice.sort((a, b) => (a.bound.top + a.bound.bottom) - (b.bound.top + b.bound.bottom));
@@ -258,14 +257,14 @@ function bulkInsert<T>(entries: Entry<T>[] | Node<T>[]): Node<T> {
             if (isNode(node[0])) {
                 const parent: Internal<T> = {
                     isLeaf: false,
-                    items: node as Node<T>[],
+                    items: node as TreeNode<T>[],
                     bound: bound,
                     parent: null,
                 }
 
                 nodes.push(parent);
 
-                for (const child of node as Node<T>[]) {
+                for (const child of node as TreeNode<T>[]) {
                     child.parent = parent;
                 }
             } else {
@@ -286,14 +285,14 @@ function bulkInsert<T>(entries: Entry<T>[] | Node<T>[]): Node<T> {
     }
 }
 
-function adjustTreeBounds<T>(node: Node<T>) {
+function adjustTreeBounds<T>(node: TreeNode<T>) {
     while (node.parent !== null) {
         node.parent.bound = rectangle.union(node.parent.bound, node.bound);
         node = node.parent;
     }
 }
 
-function chooseLeaf<T>(tree: Node<T>, rect: Rectangle): Leaf<T> {
+function chooseLeaf<T>(tree: TreeNode<T>, rect: Rectangle): Leaf<T> {
     let node = tree;
     while (!isLeaf(node)) {
         node = chooseSubtree(node, rect);
@@ -314,7 +313,7 @@ function overlap(kRect: Rectangle, rects: Rectangle[]): number {
     return area;
 }
 
-function chooseSubtree<T>(node: Node<T>, testRect: Rectangle): Node<T> {
+function chooseSubtree<T>(node: TreeNode<T>, testRect: Rectangle): TreeNode<T> {
     if (!isInternal(node))
         return node;
 
@@ -375,7 +374,7 @@ function chooseSubtree<T>(node: Node<T>, testRect: Rectangle): Node<T> {
     }
 }
 
-function* query<T>(n: Node<T>, rect: Rectangle): Generator<Entry<T>, void, void> {
+function* query<T>(n: TreeNode<T>, rect: Rectangle): Generator<Entry<T>, void, void> {
     if (isInternal(n)) {
         for (const c of n.items) {
             if (rectangle.intersects(c.bound, rect)) {

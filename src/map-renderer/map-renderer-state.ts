@@ -1,17 +1,20 @@
+import type { MapService } from "../map-data/map-service";
 import { clamp } from "../math/math-helpers";
 import * as matrix3x2 from "../math/matrix3x2";
 import { type Matrix3x2 } from "../math/matrix3x2";
 import { vec2, type Vector2 } from "../math/vector2";
 import * as vector2 from "../math/vector2";
 
-export class MapState {
+export class MapRendererState {
     pan: Vector2 = vec2(0, 0);
     scale = 1;
 
     transform: Matrix3x2 = matrix3x2.identity();
     inverseTransform: Matrix3x2 = matrix3x2.identity();
+    service: MapService;
 
-    constructor() {
+    constructor(service: MapService) {
+        this.service = service;
         this.updateMatrices();
     }
 

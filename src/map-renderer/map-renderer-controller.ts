@@ -1,10 +1,10 @@
 import { type Vector2, vec2 } from "../math/vector2";
 import * as vector2 from "../math/vector2";
-import type { MapState } from "./map-state";
+import type { MapRendererState } from "./map-renderer-state";
 
-export class MapController {
+export class MapRendererController {
     private readonly canvas: HTMLCanvasElement;
-    private readonly state: MapState;
+    private readonly state: MapRendererState;
     private readonly update: () => void;
 
     private panning = false;
@@ -13,7 +13,7 @@ export class MapController {
 
     constructor(
         canvas: HTMLCanvasElement,
-        state: MapState,
+        state: MapRendererState,
         update: () => void,
     ) {
         this.canvas = canvas;
