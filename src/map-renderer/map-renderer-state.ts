@@ -7,7 +7,7 @@ import * as vector2 from "../math/vector2";
 
 export class MapRendererState {
     pan: Vector2 = vec2(0, 0);
-    scale = 1;
+    scale = 1.5;
 
     transform: Matrix3x2 = matrix3x2.identity();
     inverseTransform: Matrix3x2 = matrix3x2.identity();
@@ -32,7 +32,7 @@ export class MapRendererState {
     }
 
     zoomAt(point: Vector2, newScale: number) {
-        const clampedScale = clamp(newScale, 0.125, 16);
+        const clampedScale = clamp(newScale, 0.15, 8);
 
         if (clampedScale === this.scale) return;
 

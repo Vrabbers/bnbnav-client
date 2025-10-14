@@ -46,15 +46,12 @@ export class MapRenderer {
             this.gridSideLength = newSideLength;
         }
 
-        const xb = Math.ceil(
-            this.width / this.state.scale / this.gridSideLength,
-        );
-        const yb = Math.ceil(
-            this.height / this.state.scale / this.gridSideLength,
-        );
+        const xb = Math.ceil(this.width / this.state.scale / this.gridSideLength);
+        const yb = Math.ceil(this.height / this.state.scale / this.gridSideLength);
 
-        if (this.grid.length >= xb + 1 && this.grid[0].length >= yb + 1)
+        if (this.grid.length >= xb + 1 && this.grid[0].length >= yb + 1) {
             return;
+        }
 
         const xBins = xb * 4;
         const yBins = yb * 4;
@@ -88,8 +85,7 @@ export class MapRenderer {
         const diff = vector2.sub(end, start);
         const first = vector2.mul(start, this.gridSideLength);
         const modX = modulo(start.x, this.gridWidth);
-        const correctedSideLength =
-            this.gridSideLength + 1 / this.state.scale;
+        const correctedSideLength = this.gridSideLength + 1 / this.state.scale;
         let y = modulo(start.y, this.gridHeight);
         for (let j = 0; j < diff.y; j++) {
             let x = modX;
@@ -121,8 +117,16 @@ export class MapRenderer {
         }
 
         ctx.restore();
-        ctx.fillText(`dt: ${dt.toString()} ms / fps: ${(1000 / dt).toString()}`, 24, 24);
-        ctx.fillText(`${vector2.toString(this.state.pan)} / ${this.state.scale.toString()}`, 24, 48);
+        ctx.fillText(
+            `dt: ${dt.toString()} ms / fps: ${(1000 / dt).toString()}`,
+            24,
+            24,
+        );
+        ctx.fillText(
+            `${vector2.toString(this.state.pan)} / ${this.state.scale.toString()}`,
+            24,
+            48,
+        );
     }
 
     private resizeCanvas() {

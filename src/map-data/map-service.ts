@@ -1,1 +1,83 @@
-export class MapService {}
+import { createContext } from "preact";
+import { rect, normalize } from "../math/rectangle";
+import type { JsonMapData } from "./map-json-data";
+import { MapTree } from "./map-tree";
+
+export const MapServiceContext = createContext<MapService>(undefined!);
+
+export type MapNodeId = string;
+export type EdgeId = string;
+export type RoadId = string;
+
+export interface MapNode {
+    id: MapNodeId;
+    x: number;
+    y: number;
+    z: number;
+    world: string;
+    adjacent: EdgeId[];
+}
+
+export interface Edge {
+    id: EdgeId;
+    node1: MapNodeId;
+    node2: MapNodeId;
+    road: RoadId;
+}
+
+export interface Road {
+    id: RoadId;
+    name: string;
+    type: string;
+}
+
+export class MapService {
+    nodes = new Map<MapNodeId, MapNode>();
+    edges = new Map<EdgeId, Edge>();
+    roads = new Map<RoadId, Road>();
+    edgeTree: MapTree<EdgeId>;
+    private ws: WebSocket;
+
+    private constructor(jsonData: JsonMapData, ws: WebSocket) {
+        for (const [id, road] of Object.entries(jsonData.roads)) {
+            this.roads.set(id, { id: id, ...road });
+        }
+        for (const [id, node] of Object.entries(jsonData.nodes)) {
+            this.nodes.set(id, { id: id, adjacent: [], ...node });
+        }
+        const edges = [];
+        for (const [id, edge] of Object.entries(jsonData.edges)) {
+            this.edges.set(id, { id: id, ...edge });
+            const n1 = this.nodes.get(edge.node1)!;
+            const n2 = this.nodes.get(edge.node2)!;
+            this.nodes.get(edge.node1)!.adjacent.push(id);
+            edges.push({ entry: id, bound: normalize(rect(n1.x, n1.z, n2.x, n2.z)) });
+        }
+        this.edgeTree = MapTree.fromItems(edges);
+        this.ws = ws;
+    }
+
+    static async connect(): Promise<MapService> {
+        const ws = await websocketAsync("wss://bnbnav.aircs.racing");
+        ws.addEventListener("message", (a) => { console.log(a) });
+        const req = await fetch("https://bnbnav.aircs.racing/api/data");
+        const json = (await req.json()) as JsonMapData;
+        return new MapService(json, ws);
+    }
+}
+
+function websocketAsync(url: string): Promise<WebSocket> {
+    const ws = new WebSocket(url);
+    return new Promise((resolve, reject) => {
+        function error() {
+            reject(new Error());
+        }
+
+        function open() {
+            resolve(ws);
+        }
+
+        ws.addEventListener("error", error);
+        ws.addEventListener("open", open);
+    });
+}

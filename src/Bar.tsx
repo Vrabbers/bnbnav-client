@@ -5,11 +5,11 @@ export function Bar() {
     const dialogRef = useRef<HTMLDialogElement>(null);
 
     return (
-        <>
+        <div>
             <button
                 onClick={() => {
                     setSt(() => {
-                        dialogRef.current?.showModal();
+                        dialogRef.current!.showModal();
                         return st + 1;
                     });
                 }}
@@ -30,6 +30,6 @@ export function Bar() {
                     {st}
                 </button>
             </dialog>
-        </>
+        </div>
     );
 }
