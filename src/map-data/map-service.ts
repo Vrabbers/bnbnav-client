@@ -9,6 +9,10 @@ export type MapNodeId = string;
 export type EdgeId = string;
 export type RoadId = string;
 
+const BASE_URL = "https://bnbnav.aircs.racing/";
+const WS_URL = new URL("/ws", BASE_URL);
+const DATA_URL = new URL("/api/data", BASE_URL);
+
 export interface MapNode {
     id: MapNodeId;
     x: number;
@@ -36,7 +40,7 @@ export class MapService {
     edges = new Map<EdgeId, Edge>();
     roads = new Map<RoadId, Road>();
     edgeTree: MapTree<EdgeId>;
-    private ws: WebSocket;
+    ws: WebSocket;
 
     private constructor(jsonData: JsonMapData, ws: WebSocket) {
         for (const [id, road] of Object.entries(jsonData.roads)) {
@@ -58,15 +62,15 @@ export class MapService {
     }
 
     static async connect(): Promise<MapService> {
-        const ws = await websocketAsync("wss://bnbnav.aircs.racing");
-        ws.addEventListener("message", (a) => { console.log(a) });
-        const req = await fetch("https://bnbnav.aircs.racing/api/data");
+        const ws = await websocketAsync(WS_URL);
+        ws.addEventListener("message", console.log);
+        const req = await fetch(DATA_URL);
         const json = (await req.json()) as JsonMapData;
         return new MapService(json, ws);
     }
 }
 
-function websocketAsync(url: string): Promise<WebSocket> {
+function websocketAsync(url: string | URL): Promise<WebSocket> {
     const ws = new WebSocket(url);
     return new Promise((resolve, reject) => {
         function error() {

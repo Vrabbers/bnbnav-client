@@ -98,7 +98,7 @@ export class MapRenderer {
                     entry.z = yIndex;
                 }
 
-                ctx.fillStyle = `rgb(${Math.floor((x * 255) / this.gridWidth).toString()} ${Math.floor((y * 255) / this.gridHeight).toString()} 127)`;
+                ctx.fillStyle = `rgb(${Math.floor((x * 127) / this.gridWidth + 127).toString()} ${Math.floor((y * 127) / this.gridHeight + 126).toString()} 255)`;
                 ctx.fillRect(
                     first.x + i * this.gridSideLength,
                     first.y + j * this.gridSideLength,
