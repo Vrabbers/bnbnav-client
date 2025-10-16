@@ -8,33 +8,32 @@ export default function App() {
     const [mapService, setMapService] = useState<MapService | null>(null);
     const [error, setError] = useState<unknown>(null);
     useEffect(() => {
-        MapService
-            .connect()
-            .then(
-                setMapService, 
-                (e: unknown) => { 
-                    console.error("Error connecting to MapService: ", e); 
-                    setError(e) 
-                }
-            );
+        MapService.connect(setError).then(setMapService, (e: unknown) => {
+            console.error("Error connecting to MapService: ", e);
+            setError(e);
+        });
     }, []);
 
     if (error !== null) {
-        return <div class="app info">An error has occured. Please reload the page.</div>
+        return (
+            <div class="app info">
+                An error has occured. Please reload the page.
+            </div>
+        );
     } else if (mapService !== null) {
         return (
             <MapServiceContext value={mapService}>
                 <div class="app">
-                    <MapContainer/>
-                    <Bar/>
+                    <MapContainer />
+                    <Bar />
                 </div>
             </MapServiceContext>
-        )
+        );
     } else {
         return (
             <div class="app info">
                 <span>Connecting to bnbnav...</span>
-                <progress/>
+                <progress />
             </div>
         );
     }

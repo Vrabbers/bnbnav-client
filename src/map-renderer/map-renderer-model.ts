@@ -5,7 +5,7 @@ import { type Matrix3x2 } from "../math/matrix3x2";
 import { vec2, type Vector2 } from "../math/vector2";
 import * as vector2 from "../math/vector2";
 
-export class MapRendererState {
+export class MapRendererModel {
     pan: Vector2 = vec2(0, 0);
     scale = 1.5;
 
@@ -34,7 +34,9 @@ export class MapRendererState {
     zoomAt(point: Vector2, newScale: number) {
         const clampedScale = clamp(newScale, 0.15, 8);
 
-        if (clampedScale === this.scale) return;
+        if (clampedScale === this.scale) {
+            return;
+        }
 
         const worldPosBefore = this.toWorld(point);
 

@@ -55,33 +55,38 @@ export class MapService {
             const n1 = this.nodes.get(edge.node1)!;
             const n2 = this.nodes.get(edge.node2)!;
             this.nodes.get(edge.node1)!.adjacent.push(id);
-            edges.push({ entry: id, bound: normalize(rect(n1.x, n1.z, n2.x, n2.z)) });
+            edges.push({
+                entry: id,
+                bound: normalize(rect(n1.x, n1.z, n2.x, n2.z)),
+            });
         }
         this.edgeTree = MapTree.fromItems(edges);
         this.ws = ws;
     }
 
-    static async connect(): Promise<MapService> {
-        const ws = await websocketAsync(WS_URL);
+    static async connect(
+        setErrorCallback: (e: unknown) => void,
+    ): Promise<MapService> {
+        const ws = new WebSocket(WS_URL);
         ws.addEventListener("message", console.log);
-        const req = await fetch(DATA_URL);
-        const json = (await req.json()) as JsonMapData;
-        return new MapService(json, ws);
+        return new Promise((resolve, reject) => {
+            ws.addEventListener("error", (a) => {
+                console.error(a);
+                setErrorCallback(a);
+                reject(new Error());
+            });
+
+            ws.addEventListener("open", () => {
+                console.log("WS connected");
+                resolve(
+                    (async () => {
+                        const req = await fetch(DATA_URL);
+                        const json = (await req.json()) as JsonMapData;
+                        console.log("JSON downloaded");
+                        return new MapService(json, ws);
+                    })(),
+                );
+            });
+        });
     }
-}
-
-function websocketAsync(url: string | URL): Promise<WebSocket> {
-    const ws = new WebSocket(url);
-    return new Promise((resolve, reject) => {
-        function error() {
-            reject(new Error());
-        }
-
-        function open() {
-            resolve(ws);
-        }
-
-        ws.addEventListener("error", error);
-        ws.addEventListener("open", open);
-    });
 }

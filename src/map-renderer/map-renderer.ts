@@ -1,9 +1,9 @@
-import type { MapService } from "../map-data/map-service";
-import { modulo } from "../math/math-helpers";
-import { vec2 } from "../math/vector2";
-import * as vector2 from "../math/vector2";
-import { MapRendererController } from "./map-renderer-controller";
-import { MapRendererState } from "./map-renderer-state";
+import type { MapService } from "../map-data/map-service.ts";
+import { modulo } from "../math/math-helpers.ts";
+import { vec2 } from "../math/vector2.ts";
+import * as vector2 from "../math/vector2.ts";
+import { MapRendererController } from "./map-renderer-controller.ts";
+import { MapRendererModel } from "./map-renderer-model.ts";
 
 interface GridBin {
     x: number | null;
@@ -13,9 +13,9 @@ interface GridBin {
 const BASE_GRID_SIDE_LENGTH = 512;
 
 export class MapRenderer {
-    private readonly canvas: HTMLCanvasElement;
-    private readonly state: MapRendererState;
+    private readonly state: MapRendererModel;
     private readonly controller: MapRendererController;
+    private canvas: HTMLCanvasElement;
     private width: number;
     private height: number;
     private resObv: ResizeObserver;
@@ -28,7 +28,7 @@ export class MapRenderer {
         this.canvas = canvas;
         this.width = canvas.clientWidth;
         this.height = canvas.clientHeight;
-        this.state = new MapRendererState(mapService);
+        this.state = new MapRendererModel(mapService);
         this.controller = new MapRendererController(
             canvas,
             this.state,
@@ -39,6 +39,13 @@ export class MapRenderer {
         this.resObv.observe(this.canvas);
     }
 
+    setCanvas(canvas: HTMLCanvasElement) {
+        this.resObv.disconnect();
+        this.canvas = canvas;
+        this.resObv.observe(this.canvas);
+        this.resizeCanvas();
+    }
+
     private resizeGrid() {
         const log2Scale = Math.ceil(Math.log2(this.state.scale));
         const newSideLength = BASE_GRID_SIDE_LENGTH * 2 ** -log2Scale;
@@ -46,8 +53,12 @@ export class MapRenderer {
             this.gridSideLength = newSideLength;
         }
 
-        const xb = Math.ceil(this.width / this.state.scale / this.gridSideLength);
-        const yb = Math.ceil(this.height / this.state.scale / this.gridSideLength);
+        const xb = Math.ceil(
+            this.width / this.state.scale / this.gridSideLength,
+        );
+        const yb = Math.ceil(
+            this.height / this.state.scale / this.gridSideLength,
+        );
 
         if (this.grid.length >= xb + 1 && this.grid[0].length >= yb + 1) {
             return;

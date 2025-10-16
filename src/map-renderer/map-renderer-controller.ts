@@ -1,10 +1,10 @@
 import { type Vector2, vec2 } from "../math/vector2";
 import * as vector2 from "../math/vector2";
-import type { MapRendererState } from "./map-renderer-state";
+import type { MapRendererModel } from "./map-renderer-model";
 
 export class MapRendererController {
     private readonly canvas: HTMLCanvasElement;
-    private readonly state: MapRendererState;
+    private readonly model: MapRendererModel;
     private readonly update: () => void;
 
     private panning = false;
@@ -13,11 +13,11 @@ export class MapRendererController {
 
     constructor(
         canvas: HTMLCanvasElement,
-        state: MapRendererState,
+        state: MapRendererModel,
         update: () => void,
     ) {
         this.canvas = canvas;
-        this.state = state;
+        this.model = state;
         this.update = update;
     }
 
@@ -25,7 +25,7 @@ export class MapRendererController {
         this.canvas.addEventListener("mousedown", this.mouseDown.bind(this));
         this.canvas.addEventListener("mouseup", this.mouseUp.bind(this));
         this.canvas.addEventListener("mousemove", this.mouseMove.bind(this));
-        this.canvas.addEventListener("mouseout", this.mouseUp.bind(this))
+        this.canvas.addEventListener("mouseout", this.mouseUp.bind(this));
         this.canvas.addEventListener("wheel", this.wheel.bind(this), {
             passive: false,
         });
@@ -35,7 +35,7 @@ export class MapRendererController {
         if (evt.button === 0) {
             this.panning = true;
             this.panFirstMouse = vec2(evt.x, evt.y);
-            this.panFirstPan = this.state.pan;
+            this.panFirstPan = this.model.pan;
         }
     }
 
@@ -48,9 +48,9 @@ export class MapRendererController {
     private mouseMove(evt: MouseEvent) {
         if (this.panning) {
             const delta = vector2.sub(vec2(evt.x, evt.y), this.panFirstMouse);
-            const scaledDelta = vector2.div(delta, this.state.scale);
-            this.state.pan = vector2.add(this.panFirstPan, scaledDelta);
-            this.state.updateMatrices();
+            const scaledDelta = vector2.div(delta, this.model.scale);
+            this.model.pan = vector2.add(this.panFirstPan, scaledDelta);
+            this.model.updateMatrices();
             this.update();
         }
     }
@@ -60,10 +60,10 @@ export class MapRendererController {
 
         const mousePos = vec2(evt.x, evt.y);
         const zoomFactor =
-            (-evt.deltaY * this.state.scale) / (evt.ctrlKey ? 100 : 1000);
-        const newScale = this.state.scale + zoomFactor;
+            (-evt.deltaY * this.model.scale) / (evt.ctrlKey ? 100 : 1000);
+        const newScale = this.model.scale + zoomFactor;
 
-        this.state.zoomAt(mousePos, newScale);
+        this.model.zoomAt(mousePos, newScale);
 
         this.update();
     }
