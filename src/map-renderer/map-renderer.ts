@@ -71,8 +71,8 @@ export class MapRenderer {
             return;
         }
 
-        const xBins = xb * 4;
-        const yBins = yb * 4;
+        const xBins = xb * 2;
+        const yBins = yb * 2;
         const a: GridBin[][] = [];
         for (let y = 0; y < yBins; y++) {
             a[y] = [];

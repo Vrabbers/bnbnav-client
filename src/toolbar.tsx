@@ -1,6 +1,6 @@
 import { useRef, useState } from "preact/hooks";
 
-export function Bar() {
+export function Toolbar() {
     const [st, setSt] = useState(-100);
     const dialogRef = useRef<HTMLDialogElement>(null);
 

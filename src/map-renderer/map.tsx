@@ -1,8 +1,9 @@
 import { MapServiceContext } from "../map-data/map-service.ts";
 import { MapRenderer } from "./map-renderer.ts";
 import { useContext, useEffect, useRef, useState } from "preact/hooks";
+import "./map.css";
 
-export function MapContainer() {
+export function Map() {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [mapRenderer, setMapRenderer] = useState<MapRenderer | null>(null);
     const mapService = useContext(MapServiceContext);
@@ -22,6 +23,7 @@ export function MapContainer() {
 
     return (
         <div class="mapContainer">
+            <button style={{ position: "absolute" }}>G</button>
             <canvas ref={canvasRef} class="mapCanvas">
                 Canvas support is required.
             </canvas>

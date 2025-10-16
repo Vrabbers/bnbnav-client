@@ -1,0 +1,12 @@
+.mapContainer {
+    flex: 1 1 100%;
+    min-height: 0;
+    order: -1;
+    touch-action: none;
+}
+
+.mapCanvas {
+    width: 100%;
+    height: 100%;
+    touch-action: none;
+}
