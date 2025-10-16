@@ -1,5 +1,5 @@
 import { createContext } from "preact";
-import { rect, normalize } from "../math/rectangle";
+import { rect, rectNormalize } from "../math/rectangle";
 import type { JsonMapData } from "./map-json-data";
 import { MapTree } from "./map-tree";
 
@@ -57,7 +57,7 @@ export class MapService {
             this.nodes.get(edge.node1)!.adjacent.push(id);
             edges.push({
                 entry: id,
-                bound: normalize(rect(n1.x, n1.z, n2.x, n2.z)),
+                bound: rectNormalize(rect(n1.x, n1.z, n2.x, n2.z)),
             });
         }
         this.edgeTree = MapTree.fromItems(edges);

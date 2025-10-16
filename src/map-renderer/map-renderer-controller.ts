@@ -47,9 +47,12 @@ export class MapRendererController {
 
     private mouseMove(evt: MouseEvent) {
         if (this.panning) {
-            const delta = vector2.sub(vec2(evt.x, evt.y), this.panFirstMouse);
-            const scaledDelta = vector2.div(delta, this.model.scale);
-            this.model.pan = vector2.add(this.panFirstPan, scaledDelta);
+            const delta = vector2.vec2Sub(
+                vec2(evt.x, evt.y),
+                this.panFirstMouse,
+            );
+            const scaledDelta = vector2.vec2Div(delta, this.model.scale);
+            this.model.pan = vector2.vec2Add(this.panFirstPan, scaledDelta);
             this.model.updateMatrices();
             this.update();
         }

@@ -1,14 +1,22 @@
 import assert from "../assert";
-import * as rectangle from "../math/rectangle";
-import {type Rectangle} from "../math/rectangle";
-import {distanceSquared} from "../math/vector2";
+import {
+    rectArea,
+    rectAreaOfIntersection,
+    rectAreaOfUnion,
+    rectCenter,
+    rectSemiperimeter,
+    rectTestIntersects,
+    rectUnion,
+    rectUnionMany,
+    type Rectangle,
+} from "../math/rectangle";
+import { vec2DistanceSquared } from "../math/vector2";
 
 const MAX_IN_NODE = 32;
 const MIN_IN_NODE = 2;
 const DISTRIBUTION_COUNT = MAX_IN_NODE - 2 * MIN_IN_NODE + 2;
 const REINSERT_P = 20;
 const CHOOSE_SUBTREE_P = 32;
-
 
 export interface Entry<T> {
     bound: Rectangle;
@@ -63,9 +71,9 @@ export class MapTree<T> {
             this.root = {
                 parent: null,
                 isLeaf: true,
-                items: [{entry, bound}],
+                items: [{ entry, bound }],
                 bound: bound,
-            }
+            };
         } else {
             const leaf = chooseLeaf(this.root, bound);
             this.insertAt(leaf, { entry, bound }, true);
@@ -73,8 +81,7 @@ export class MapTree<T> {
     }
 
     *search(rect: Rectangle): Generator<Entry<T>, void, void> {
-        if (this.root === null)
-            return;
+        if (this.root === null) return;
 
         yield* query(this.root, rect);
     }
@@ -87,7 +94,7 @@ export class MapTree<T> {
             assert(isNode(entry));
             node.items.push(entry);
         }
-        node.bound = rectangle.union(node.bound, entry.bound);
+        node.bound = rectUnion(node.bound, entry.bound);
         let split = null;
         if (node.items.length > MAX_IN_NODE) {
             split = this.overflowTreatment(node, first);
@@ -95,23 +102,30 @@ export class MapTree<T> {
         this.adjustTree(node, split, first);
     }
 
-    private insertAtLevel(node: TreeNode<T>, entry: Bounded<T>, first: boolean) {
+    private insertAtLevel(
+        node: TreeNode<T>,
+        entry: Bounded<T>,
+        first: boolean,
+    ) {
         assert(node.parent !== null && this.root !== null);
         let movingUp = node;
         let movingDown = this.root;
         while (movingUp.parent !== null) {
             movingUp = movingUp.parent;
-            movingDown = chooseSubtree(movingDown, entry.bound); // Moves up 
+            movingDown = chooseSubtree(movingDown, entry.bound); // Moves up
         }
         this.insertAt(movingDown, entry, first);
     }
 
-    private overflowTreatment(node: TreeNode<T>, first: boolean): TreeNode<T> | null {
+    private overflowTreatment(
+        node: TreeNode<T>,
+        first: boolean,
+    ): TreeNode<T> | null {
         // If the level is not the root level and this is the first call of overflowTreatment in the given level
         // during the insertion of one data rectangle, then
         assert(node.items.length === MAX_IN_NODE + 1);
         if (node !== this.root && first) {
-            // "this is the first call of overflowTreatment in the given level" 
+            // "this is the first call of overflowTreatment in the given level"
             // is guaranteed by reinsert calling insertAtLevel with false
             this.reinsert(node);
             return null;
@@ -124,16 +138,22 @@ export class MapTree<T> {
         assert(node.items.length === MAX_IN_NODE + 1);
         // RI1: For all M + 1 entries of a node N, compute the distance between the centers of their rectangles and the
         // center of the bounding rectangle of N
-        const nodeCenter = rectangle.center(node.bound);
-        const distances = node.items.map(x => [x, distanceSquared(nodeCenter, rectangle.center(x.bound))] as const);
+        const nodeCenter = rectCenter(node.bound);
+        const distances = node.items.map(
+            (x) =>
+                [
+                    x,
+                    vec2DistanceSquared(nodeCenter, rectCenter(x.bound)),
+                ] as const,
+        );
 
         // RI2: Sort the entries in *increasing order of their distances
         distances.sort((a, b) => a[1] - b[1]);
 
         // RI3: Remove *last p entries from N and adjust the bounding rectangle of N
-        const entriesSorted = distances.map(x => x[0]) as typeof node.items;
+        const entriesSorted = distances.map((x) => x[0]) as typeof node.items;
         const removed = entriesSorted.splice(REINSERT_P);
-        const newBound = rectangle.unionMany(entriesSorted.map(x => x.bound));
+        const newBound = rectUnionMany(entriesSorted.map((x) => x.bound));
         node.items = entriesSorted;
         node.bound = newBound;
         adjustTreeBounds(node);
@@ -145,12 +165,19 @@ export class MapTree<T> {
         }
     }
 
-    private adjustTree(node: TreeNode<T>, nodeSplit: TreeNode<T> | null, first: boolean) {
+    private adjustTree(
+        node: TreeNode<T>,
+        nodeSplit: TreeNode<T> | null,
+        first: boolean,
+    ) {
         while (node.parent !== null) {
             let parentSplit = null;
-            node.parent.bound = rectangle.union(node.parent.bound, node.bound);
+            node.parent.bound = rectUnion(node.parent.bound, node.bound);
             if (nodeSplit !== null) {
-                node.parent.bound = rectangle.union(node.parent.bound, nodeSplit.bound);
+                node.parent.bound = rectUnion(
+                    node.parent.bound,
+                    nodeSplit.bound,
+                );
                 node.parent.items.push(nodeSplit);
                 if (node.parent.items.length > MAX_IN_NODE) {
                     parentSplit = this.overflowTreatment(node.parent, first);
@@ -165,8 +192,8 @@ export class MapTree<T> {
                 isLeaf: false,
                 parent: null,
                 items: [node, nodeSplit],
-                bound: rectangle.union(node.bound, nodeSplit.bound),
-            }
+                bound: rectUnion(node.bound, nodeSplit.bound),
+            };
             node.parent = newRoot;
             nodeSplit.parent = newRoot;
             this.root = newRoot;
@@ -174,35 +201,44 @@ export class MapTree<T> {
     }
 }
 
-const X_AXIS_SELECTOR = [(r: Rectangle) => r.left, (r: Rectangle) => r.right] as const;
-const Y_AXIS_SELECTOR = [(r: Rectangle) => r.top, (r: Rectangle) => r.bottom] as const;
+const X_AXIS_SELECTOR = [
+    (r: Rectangle) => r.left,
+    (r: Rectangle) => r.right,
+] as const;
+const Y_AXIS_SELECTOR = [
+    (r: Rectangle) => r.top,
+    (r: Rectangle) => r.bottom,
+] as const;
 
 function split<T>(node: TreeNode<T>): TreeNode<T> {
     assert(node.items.length === MAX_IN_NODE + 1);
     // Choose axis
-    let chosenSplitEdge: typeof X_AXIS_SELECTOR[0];
+    let chosenSplitEdge: (typeof X_AXIS_SELECTOR)[0];
     let chosenSplitIndex: number;
     let chosenSplitSemiperimeterSum = Infinity;
     for (const axis of [X_AXIS_SELECTOR, Y_AXIS_SELECTOR]) {
         let semiperimeterSum = 0;
         let distributionArea = Infinity;
         let distributionOverlap = Infinity;
-        let distributionEdge: typeof axis[0];
+        let distributionEdge: (typeof axis)[0];
         let distributionIndex: number;
 
         for (const edge of axis) {
             node.items.sort((a, b) => edge(a.bound) - edge(b.bound));
 
-            const rects = node.items.map(x => x.bound);
+            const rects = node.items.map((x) => x.bound);
             for (let k = 0; k < DISTRIBUTION_COUNT; k++) {
-                const region1 = rectangle.unionMany(rects.slice(0, MIN_IN_NODE + k));
-                const region2 = rectangle.unionMany(rects.slice(MIN_IN_NODE + k));
-                semiperimeterSum += rectangle.semiperimeter(region1) + rectangle.semiperimeter(region2);
-                const area = rectangle.area(region1) + rectangle.area(region2);
-                const overlap = rectangle.intersectionArea(region1, region2);
+                const region1 = rectUnionMany(rects.slice(0, MIN_IN_NODE + k));
+                const region2 = rectUnionMany(rects.slice(MIN_IN_NODE + k));
+                semiperimeterSum +=
+                    rectSemiperimeter(region1) + rectSemiperimeter(region2);
+                const area = rectArea(region1) + rectArea(region2);
+                const overlap = rectAreaOfIntersection(region1, region2);
 
-                if (overlap < distributionOverlap ||
-                    overlap === distributionOverlap && area > distributionArea) {
+                if (
+                    overlap < distributionOverlap ||
+                    (overlap === distributionOverlap && area > distributionArea)
+                ) {
                     distributionEdge = edge;
                     distributionIndex = MIN_IN_NODE + k;
                     distributionOverlap = overlap;
@@ -219,10 +255,12 @@ function split<T>(node: TreeNode<T>): TreeNode<T> {
     }
 
     // Reproduce result
-    node.items.sort((a, b) => chosenSplitEdge(a.bound) - chosenSplitEdge(b.bound));
+    node.items.sort(
+        (a, b) => chosenSplitEdge(a.bound) - chosenSplitEdge(b.bound),
+    );
     const newItems = node.items.splice(chosenSplitIndex!);
-    node.bound = rectangle.unionMany(node.items.map(x => x.bound));
-    const newBound = rectangle.unionMany(newItems.map(x => x.bound));
+    node.bound = rectUnionMany(node.items.map((x) => x.bound));
+    const newBound = rectUnionMany(newItems.map((x) => x.bound));
     return {
         isLeaf: node.isLeaf,
         parent: node.parent,
@@ -238,21 +276,24 @@ function bulkInsert<T>(entries: Entry<T>[] | TreeNode<T>[]): TreeNode<T> {
     const slices = [];
     const sliceSize = s * MAX_IN_NODE;
     // sort by x-coord (sum gives center sort)
-    entries.sort((a, b) => (a.bound.left + a.bound.right) - (b.bound.left + b.bound.right));
+    entries.sort(
+        (a, b) => a.bound.left + a.bound.right - (b.bound.left + b.bound.right),
+    );
     for (let i = 0; i < entries.length; i += sliceSize) {
-        slices.push(
-            entries.slice(i, i + sliceSize)
-        );
+        slices.push(entries.slice(i, i + sliceSize));
     }
 
     const nodes: TreeNode<T>[] = [];
     for (const slice of slices) {
         // Sort slice by y centers
-        slice.sort((a, b) => (a.bound.top + a.bound.bottom) - (b.bound.top + b.bound.bottom));
+        slice.sort(
+            (a, b) =>
+                a.bound.top + a.bound.bottom - (b.bound.top + b.bound.bottom),
+        );
         // Create nodes (slices of the slice).
         for (let i = 0; i < slice.length; i += MAX_IN_NODE) {
-            const node = slice.slice(i, i + MAX_IN_NODE)
-            const bound = rectangle.unionMany(node.map(x => x.bound));
+            const node = slice.slice(i, i + MAX_IN_NODE);
+            const bound = rectUnionMany(node.map((x) => x.bound));
 
             if (isNode(node[0])) {
                 const parent: Internal<T> = {
@@ -260,7 +301,7 @@ function bulkInsert<T>(entries: Entry<T>[] | TreeNode<T>[]): TreeNode<T> {
                     items: node as TreeNode<T>[],
                     bound: bound,
                     parent: null,
-                }
+                };
 
                 nodes.push(parent);
 
@@ -277,7 +318,7 @@ function bulkInsert<T>(entries: Entry<T>[] | TreeNode<T>[]): TreeNode<T> {
             }
         }
     }
-    
+
     if (nodes.length === 1) {
         return nodes[0];
     } else {
@@ -287,7 +328,7 @@ function bulkInsert<T>(entries: Entry<T>[] | TreeNode<T>[]): TreeNode<T> {
 
 function adjustTreeBounds<T>(node: TreeNode<T>) {
     while (node.parent !== null) {
-        node.parent.bound = rectangle.union(node.parent.bound, node.bound);
+        node.parent.bound = rectUnion(node.parent.bound, node.bound);
         node = node.parent;
     }
 }
@@ -306,7 +347,7 @@ function overlap(kRect: Rectangle, rects: Rectangle[]): number {
 
     for (const e of rects) {
         if (kRect !== e) {
-            area += rectangle.intersectionArea(e, kRect);
+            area += rectAreaOfIntersection(e, kRect);
         }
     }
 
@@ -314,12 +355,16 @@ function overlap(kRect: Rectangle, rects: Rectangle[]): number {
 }
 
 function chooseSubtree<T>(node: TreeNode<T>, testRect: Rectangle): TreeNode<T> {
-    if (!isInternal(node))
-        return node;
+    if (!isInternal(node)) return node;
 
     if (node.items[0].isLeaf) {
         const leastP = node.items.map(
-            x => [x, rectangle.unionArea(x.bound, testRect) - rectangle.area(x.bound)] as const);
+            (x) =>
+                [
+                    x,
+                    rectAreaOfUnion(x.bound, testRect) - rectArea(x.bound),
+                ] as const,
+        );
 
         leastP.sort((a, b) => a[1] - b[1]);
 
@@ -327,26 +372,35 @@ function chooseSubtree<T>(node: TreeNode<T>, testRect: Rectangle): TreeNode<T> {
             leastP.splice(CHOOSE_SUBTREE_P);
         }
 
-        const rects = node.items.map(x => x.bound);
-        const overlaps = leastP.map(e => overlap(e[0].bound, rects));
+        const rects = node.items.map((x) => x.bound);
+        const overlaps = leastP.map((e) => overlap(e[0].bound, rects));
         rects.push(testRect);
-        const overlapEnlarges = leastP.map((e, i) => overlap(e[0].bound, rects) - overlaps[i]);
+        const overlapEnlarges = leastP.map(
+            (e, i) => overlap(e[0].bound, rects) - overlaps[i],
+        );
 
         let [leastEntry, leastAreaEnlarge] = leastP.pop()!;
         let leastOverlapEnlarge = overlapEnlarges.pop()!;
-        let leastArea = rectangle.area(leastEntry.bound);
+        let leastArea = rectArea(leastEntry.bound);
         for (const [i, [entry, entryAreaEnlarge]] of leastP.entries()) {
             const entryOverlapEnlarge = overlapEnlarges[i];
 
-            if (entryOverlapEnlarge > leastOverlapEnlarge)
+            if (entryOverlapEnlarge > leastOverlapEnlarge) continue;
+            if (
+                entryOverlapEnlarge === leastOverlapEnlarge &&
+                entryAreaEnlarge > leastAreaEnlarge
+            ) {
                 continue;
-            if (entryOverlapEnlarge === leastOverlapEnlarge && entryAreaEnlarge > leastAreaEnlarge)
-                continue;
+            }
 
-            const entryArea = rectangle.area(entry.bound);
+            const entryArea = rectArea(entry.bound);
 
-            if (entryAreaEnlarge === leastAreaEnlarge && entryArea > leastArea)
+            if (
+                entryAreaEnlarge === leastAreaEnlarge &&
+                entryArea > leastArea
+            ) {
                 continue;
+            }
 
             leastOverlapEnlarge = entryOverlapEnlarge;
             leastAreaEnlarge = entryAreaEnlarge;
@@ -354,16 +408,19 @@ function chooseSubtree<T>(node: TreeNode<T>, testRect: Rectangle): TreeNode<T> {
             leastEntry = entry;
         }
         return leastEntry;
-
     } else {
-        const enlarges = node.items.map(x => rectangle.unionArea(x.bound, testRect) - rectangle.area(x.bound));
+        const enlarges = node.items.map(
+            (x) => rectAreaOfUnion(x.bound, testRect) - rectArea(x.bound),
+        );
         let lowestEnlarge = enlarges.pop()!;
         let lowestEntry = node.items.at(-1)!;
         for (const [i, currentEnlarge] of enlarges.entries()) {
             // If the enlargement is greater or it's tied but its area is larger, don't choose this.
-            if (currentEnlarge > lowestEnlarge)
-                continue;
-            if (currentEnlarge === lowestEnlarge && rectangle.area(node.items[i].bound) > rectangle.area(lowestEntry.bound))
+            if (currentEnlarge > lowestEnlarge) continue;
+            if (
+                currentEnlarge === lowestEnlarge &&
+                rectArea(node.items[i].bound) > rectArea(lowestEntry.bound)
+            )
                 continue;
 
             // Strictly less than or tied and the area is smaller
@@ -374,19 +431,21 @@ function chooseSubtree<T>(node: TreeNode<T>, testRect: Rectangle): TreeNode<T> {
     }
 }
 
-function* query<T>(n: TreeNode<T>, rect: Rectangle): Generator<Entry<T>, void, void> {
+function* query<T>(
+    n: TreeNode<T>,
+    rect: Rectangle,
+): Generator<Entry<T>, void, void> {
     if (isInternal(n)) {
         for (const c of n.items) {
-            if (rectangle.intersects(c.bound, rect)) {
+            if (rectTestIntersects(c.bound, rect)) {
                 yield* query(c, rect);
             }
         }
     } else {
         for (const c of n.items) {
-            if (rectangle.intersects(c.bound, rect)) {
+            if (rectTestIntersects(c.bound, rect)) {
                 yield c;
             }
         }
     }
 }
-

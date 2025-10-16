@@ -16,19 +16,19 @@ export function rect(l: number, t: number, r: number, b: number): Rectangle {
     };
 }
 
-export function width(r: Rectangle): number {
+export function rectWidth(r: Rectangle): number {
     return r.right - r.left;
 }
 
-export function height(r: Rectangle): number {
+export function rectHeight(r: Rectangle): number {
     return r.bottom - r.top;
 }
 
-export function area(r: Rectangle): number {
-    return width(r) * height(r);
+export function rectArea(r: Rectangle): number {
+    return rectWidth(r) * rectHeight(r);
 }
 
-export function normalize(r: Rectangle): Rectangle {
+export function rectNormalize(r: Rectangle): Rectangle {
     let left = r.left;
     let right = r.right;
     if (r.left > r.right) {
@@ -42,7 +42,7 @@ export function normalize(r: Rectangle): Rectangle {
     return rect(left, top, right, bottom);
 }
 
-export function union(a: Rectangle, b: Rectangle): Rectangle {
+export function rectUnion(a: Rectangle, b: Rectangle): Rectangle {
     return rect(
         Math.min(a.left, b.left),
         Math.min(a.top, b.top),
@@ -51,7 +51,7 @@ export function union(a: Rectangle, b: Rectangle): Rectangle {
     );
 }
 
-export function unionArea(x: Rectangle, y: Rectangle) : number {
+export function rectAreaOfUnion(x: Rectangle, y: Rectangle): number {
     const l = Math.min(x.left, y.left);
     const t = Math.min(x.top, y.top);
     const r = Math.max(x.right, y.right);
@@ -59,7 +59,7 @@ export function unionArea(x: Rectangle, y: Rectangle) : number {
     return (r - l) * (b - t);
 }
 
-export function unionMany(rects: Rectangle[]): Rectangle {
+export function rectUnionMany(rects: Rectangle[]): Rectangle {
     let top = +Infinity;
     let left = +Infinity;
     let bottom = -Infinity;
@@ -73,7 +73,7 @@ export function unionMany(rects: Rectangle[]): Rectangle {
     return rect(left, top, right, bottom);
 }
 
-export function intersection(a: Rectangle, b: Rectangle): Rectangle | null {
+export function rectIntersection(a: Rectangle, b: Rectangle): Rectangle | null {
     const left = Math.max(a.left, b.left);
     const right = Math.min(a.right, b.right);
     const top = Math.max(a.top, b.top);
@@ -86,7 +86,7 @@ export function intersection(a: Rectangle, b: Rectangle): Rectangle | null {
     return null;
 }
 
-export function intersectionArea(a: Rectangle, b: Rectangle): number {
+export function rectAreaOfIntersection(a: Rectangle, b: Rectangle): number {
     const left = Math.max(a.left, b.left);
     const right = Math.min(a.right, b.right);
     const top = Math.max(a.top, b.top);
@@ -99,23 +99,23 @@ export function intersectionArea(a: Rectangle, b: Rectangle): number {
     return 0;
 }
 
-export function intersects(a: Rectangle, b: Rectangle): boolean {
-    return (a.left <= b.right) && (b.left <= a.right) && (a.top <= b.bottom) && (b.top <= a.bottom);
-}
-
-export function expand(r: Rectangle, x: number): Rectangle {
-    return rect(
-        r.left - x,
-        r.top - x,
-        r.right + x,
-        r.bottom + x,
+export function rectTestIntersects(a: Rectangle, b: Rectangle): boolean {
+    return (
+        a.left <= b.right &&
+        b.left <= a.right &&
+        a.top <= b.bottom &&
+        b.top <= a.bottom
     );
 }
 
-export function semiperimeter(r: Rectangle): number {
-    return (r.right - r.left) + (r.bottom - r.top);
+export function rectExpand(r: Rectangle, x: number): Rectangle {
+    return rect(r.left - x, r.top - x, r.right + x, r.bottom + x);
 }
 
-export function center(r: Rectangle): Vector2 {
+export function rectSemiperimeter(r: Rectangle): number {
+    return r.right - r.left + (r.bottom - r.top);
+}
+
+export function rectCenter(r: Rectangle): Vector2 {
     return vec2((r.left + r.right) * 0.5, (r.top + r.bottom) * 0.5);
 }

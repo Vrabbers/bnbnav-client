@@ -44,9 +44,9 @@ export class MapRendererModel {
         this.updateMatrices();
 
         const worldPosAfter = this.toWorld(point);
-        const error = vector2.sub(worldPosAfter, worldPosBefore);
+        const error = vector2.vec2Sub(worldPosAfter, worldPosBefore);
 
-        this.pan = vector2.add(this.pan, error);
+        this.pan = vector2.vec2Add(this.pan, error);
         this.updateMatrices();
     }
 }

@@ -1,7 +1,14 @@
 import type { MapService } from "../map-data/map-service.ts";
 import { modulo } from "../math/math-helpers.ts";
-import { vec2 } from "../math/vector2.ts";
-import * as vector2 from "../math/vector2.ts";
+import {
+    vec2,
+    vec2Ceil,
+    vec2Div,
+    vec2Floor,
+    vec2Mul,
+    vec2Sub,
+    vec2ToString,
+} from "../math/vector2.ts";
 import { MapRendererController } from "./map-renderer-controller.ts";
 import { MapRendererModel } from "./map-renderer-model.ts";
 
@@ -91,10 +98,10 @@ export class MapRenderer {
 
         const topLeft = this.state.toWorld(vec2(0, 0));
         const bottomRight = this.state.toWorld(vec2(this.width, this.height));
-        const start = vector2.floor(vector2.div(topLeft, this.gridSideLength));
-        const end = vector2.ceil(vector2.div(bottomRight, this.gridSideLength));
-        const diff = vector2.sub(end, start);
-        const first = vector2.mul(start, this.gridSideLength);
+        const start = vec2Floor(vec2Div(topLeft, this.gridSideLength));
+        const end = vec2Ceil(vec2Div(bottomRight, this.gridSideLength));
+        const diff = vec2Sub(end, start);
+        const first = vec2Mul(start, this.gridSideLength);
         const modX = modulo(start.x, this.gridWidth);
         const correctedSideLength = this.gridSideLength + 1 / this.state.scale;
         let y = modulo(start.y, this.gridHeight);
@@ -134,7 +141,7 @@ export class MapRenderer {
             24,
         );
         ctx.fillText(
-            `${vector2.toString(this.state.pan)} / ${this.state.scale.toString()}`,
+            `${vec2ToString(this.state.pan)} / ${this.state.scale.toString()}`,
             24,
             48,
         );
