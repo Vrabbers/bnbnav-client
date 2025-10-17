@@ -68,7 +68,7 @@ export class MapService {
         setErrorCallback: (e: unknown) => void,
     ): Promise<MapService> {
         const ws = new WebSocket(WS_URL);
-        ws.addEventListener("message", console.log);
+        ws.addEventListener("message", () => {});
         return new Promise((resolve, reject) => {
             ws.addEventListener("error", (a) => {
                 console.error(a);

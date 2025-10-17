@@ -11,13 +11,9 @@ import {
 } from "../math/vector2.ts";
 import { MapRendererController } from "./map-renderer-controller.ts";
 import { MapRendererModel } from "./map-renderer-model.ts";
+import { RenderBin } from "./render-bin.ts";
 
-interface GridBin {
-    x: number | null;
-    z: number | null;
-}
-
-const BASE_GRID_SIDE_LENGTH = 512;
+export const BASE_GRID_SIDE_LENGTH = 512;
 
 export class MapRenderer {
     private readonly state: MapRendererModel;
@@ -26,7 +22,7 @@ export class MapRenderer {
     private width: number;
     private height: number;
     private resObv: ResizeObserver;
-    private grid: GridBin[][] = [];
+    private grid: (RenderBin | null)[][] = [];
     private gridSideLength = BASE_GRID_SIDE_LENGTH;
     private gridWidth = 0;
     private gridHeight = 0;
@@ -73,14 +69,11 @@ export class MapRenderer {
 
         const xBins = xb * 2;
         const yBins = yb * 2;
-        const a: GridBin[][] = [];
+        const a: (RenderBin | null)[][] = [];
         for (let y = 0; y < yBins; y++) {
             a[y] = [];
             for (let x = 0; x < xBins; x++) {
-                a[y][x] = {
-                    x: null,
-                    z: null,
-                };
+                a[y][x] = null;
             }
         }
         this.grid = a;
@@ -108,12 +101,18 @@ export class MapRenderer {
         for (let j = 0; j < diff.y; j++) {
             let x = modX;
             for (let i = 0; i < diff.x; i++) {
-                const entry = this.grid[y][x];
+                let entry = this.grid[y][x];
                 const xIndex = start.x + i;
                 const yIndex = start.y + j;
-                if (entry.x !== xIndex || entry.z !== yIndex) {
-                    entry.x = xIndex;
-                    entry.z = yIndex;
+                if (
+                    entry === null ||
+                    entry.xIndex !== xIndex ||
+                    entry.yIndex !== yIndex ||
+                    entry.length !== this.gridSideLength
+                ) {
+                    entry = new RenderBin(xIndex, yIndex, this.gridSideLength);
+                    this.grid[y][x] = entry;
+                    entry.renderToBuffer(this.state.service);
                 }
 
                 ctx.fillStyle = `rgb(${Math.floor((x * 127) / this.gridWidth + 127).toString()} ${Math.floor((y * 127) / this.gridHeight + 126).toString()} 255)`;
@@ -125,10 +124,19 @@ export class MapRenderer {
                 );
                 ctx.fillStyle = "white";
                 ctx.fillText(
-                    `[${(entry.x * this.gridSideLength).toString()},${(entry.z * this.gridSideLength).toString()}]`,
+                    `[${(entry.xIndex * this.gridSideLength).toString()},${(entry.yIndex * this.gridSideLength).toString()}]`,
                     first.x + i * this.gridSideLength,
                     first.y + j * this.gridSideLength,
                 );
+
+                ctx.drawImage(
+                    entry.buffer!,
+                    first.x + i * this.gridSideLength,
+                    first.y + j * this.gridSideLength,
+                    correctedSideLength,
+                    correctedSideLength,
+                );
+
                 x = (x + 1) % this.gridWidth;
             }
             y = (y + 1) % this.gridHeight;
