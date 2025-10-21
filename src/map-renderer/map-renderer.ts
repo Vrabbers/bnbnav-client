@@ -82,8 +82,6 @@ export class MapRenderer {
     }
 
     private renderMap(ctx: CanvasRenderingContext2D, dt: number) {
-        ctx.lineWidth = 5;
-        ctx.strokeRect(0, 0, this.width - 1, this.height - 1);
         ctx.save();
         ctx.textBaseline = "top";
         ctx.font = `${(16 / this.state.scale).toString()}px sans-serif`;
@@ -115,36 +113,38 @@ export class MapRenderer {
                     entry.renderToBuffer(this.state.service);
                 }
 
-                ctx.fillStyle = `rgb(${Math.floor((x * 127) / this.gridWidth + 127).toString()} ${Math.floor((y * 127) / this.gridHeight + 126).toString()} 255)`;
-                ctx.fillRect(
-                    first.x + i * this.gridSideLength,
-                    first.y + j * this.gridSideLength,
-                    correctedSideLength,
-                    correctedSideLength,
-                );
-                ctx.fillStyle = "white";
-                ctx.fillText(
-                    `[${(entry.xIndex * this.gridSideLength).toString()},${(entry.yIndex * this.gridSideLength).toString()}]`,
-                    first.x + i * this.gridSideLength,
-                    first.y + j * this.gridSideLength,
-                );
+                if (!entry.isEmpty) {
+                    ctx.fillStyle = `rgb(${Math.floor((x * 127) / this.gridWidth + 127).toString()} ${Math.floor((y * 127) / this.gridHeight + 126).toString()} 255)`;
+                    ctx.fillRect(
+                        first.x + i * this.gridSideLength,
+                        first.y + j * this.gridSideLength,
+                        correctedSideLength,
+                        correctedSideLength,
+                    );
+                    ctx.fillStyle = "black";
+                    ctx.fillText(
+                        `[${(entry.xIndex * this.gridSideLength).toString()},${(entry.yIndex * this.gridSideLength).toString()}]`,
+                        first.x + i * this.gridSideLength,
+                        first.y + j * this.gridSideLength,
+                    );
 
-                ctx.drawImage(
-                    entry.buffer!,
-                    first.x + i * this.gridSideLength,
-                    first.y + j * this.gridSideLength,
-                    correctedSideLength,
-                    correctedSideLength,
-                );
-
+                    ctx.drawImage(
+                        entry.buffer!,
+                        first.x + i * this.gridSideLength,
+                        first.y + j * this.gridSideLength,
+                        this.gridSideLength,
+                        this.gridSideLength,
+                    );
+                }
                 x = (x + 1) % this.gridWidth;
             }
             y = (y + 1) % this.gridHeight;
         }
 
+        const fps = 1000 / dt;
         ctx.restore();
         ctx.fillText(
-            `dt: ${dt.toString()} ms / fps: ${(1000 / dt).toString()}`,
+            `dt: ${dt.toString()} ms / fps: ${fps.toString()}`,
             24,
             24,
         );
@@ -154,6 +154,8 @@ export class MapRenderer {
             48,
         );
     }
+
+    fpses = [] as number[];
 
     private resizeCanvas() {
         const w = this.canvas.clientWidth;

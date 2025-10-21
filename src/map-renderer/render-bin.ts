@@ -1,5 +1,5 @@
 import type { MapService } from "../map-data/map-service";
-import { rect } from "../math/rectangle";
+import { rect, rectExpand } from "../math/rectangle";
 import { BASE_GRID_SIDE_LENGTH } from "./map-renderer";
 
 export class RenderBin {
@@ -29,9 +29,12 @@ export class RenderBin {
         const x = this.xIndex * this.length;
         const y = this.yIndex * this.length;
 
-        const searchRect = rect(x, y, x + this.length, y + this.length);
-
         const scale = BASE_GRID_SIDE_LENGTH / this.length;
+
+        const searchRect = rectExpand(
+            rect(x, y, x + this.length, y + this.length),
+            5 * scale,
+        );
 
         ctx.scale(scale, scale);
         ctx.translate(-x, -y);
@@ -51,6 +54,9 @@ export class RenderBin {
         }
 
         this.isValid = true;
-        this.buffer = canvas.transferToImageBitmap();
+
+        if (!this.isEmpty) {
+            this.buffer = canvas.transferToImageBitmap();
+        }
     }
 }
