@@ -25,6 +25,7 @@ export function Toolbar({ position }: { position: Signal<Vector2> }) {
                 {t("COORDINATES", {
                     x: position.value.x,
                     z: position.value.y,
+                    maximumFractionDigits: 2,
                 })}
             </p>
 

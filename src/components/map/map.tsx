@@ -20,16 +20,20 @@ export function MapCanvas({ position }: { position: Signal<Vector2> }) {
     const mapService = useContext(MapServiceContext);
 
     useEffect(() => {
-        if (canvasRef.current !== null) {
-            const renderer = new MapRenderer(canvasRef.current, mapService);
-            mapRendererRef.current = renderer;
+        if (!canvasRef.current) return;
 
-            renderer.addEventListener("position-changed", (e: Event) => {
-                position.value = (e as CustomEvent<Vector2>).detail;
-            });
-            return () => { renderer.dispose() };
-        }
-    }, [mapService]);
+        const renderer = new MapRenderer(
+            canvasRef.current,
+            mapService,
+            (center) => { position.value = center; },
+        );
+        mapRendererRef.current = renderer;
+
+        return () => {
+            mapRendererRef.current = null;
+            renderer.dispose();
+        };
+    }, [mapService, position]);
 
     return (
         <canvas ref={canvasRef} class="mapCanvas">

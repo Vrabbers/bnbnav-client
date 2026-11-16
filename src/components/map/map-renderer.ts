@@ -1,6 +1,7 @@
 import type { MapService } from "../../map-service/map-service.ts";
 import { modulo } from "../../math/math-helpers.ts";
 import {
+    type Vector2,
     vec2,
     vec2Ceil,
     vec2Div,
@@ -15,11 +16,12 @@ import { RenderBin } from "./render-bin.ts";
 
 export const BASE_GRID_SIDE_LENGTH = 512;
 
-export class MapRenderer extends EventTarget {
+export class MapRenderer {
     private readonly state: MapRendererModel;
     private readonly controller: MapRendererController;
     private readonly canvas: HTMLCanvasElement;
     private readonly abortController: AbortController;
+    private readonly onPositionChange: (center: Vector2) => void;
 
     private width: number;
     private height: number;
@@ -28,9 +30,14 @@ export class MapRenderer extends EventTarget {
     private gridSideLength = BASE_GRID_SIDE_LENGTH;
     private gridWidth = 0;
     private gridHeight = 0;
+    private frameId: number | null = null;
 
-    constructor(canvas: HTMLCanvasElement, mapService: MapService) {
-        super();
+    constructor(
+        canvas: HTMLCanvasElement,
+        mapService: MapService,
+        onPositionChange: (center: Vector2) => void,
+    ) {
+        this.onPositionChange = onPositionChange;
         this.abortController = new AbortController();
         this.canvas = canvas;
         this.width = canvas.clientWidth;
@@ -44,17 +51,22 @@ export class MapRenderer extends EventTarget {
         this.controller.connect(this.abortController.signal);
         this.canvasResizeObserver = new ResizeObserver(this.resizeCanvas.bind(this));
         this.canvasResizeObserver.observe(this.canvas);
+        this.resizeCanvas();
     }
 
     dispose() {
         this.canvasResizeObserver.disconnect();
         this.abortController.abort();
+        if (this.frameId !== null) {
+            cancelAnimationFrame(this.frameId);
+            this.frameId = null;
+        }
     }
 
     private update() {
         const center = this.state.toWorld(vec2(this.width / 2, this.height / 2));
         this.requestRender();
-        this.dispatchEvent(new CustomEvent("position-changed", { detail: center }));
+        this.onPositionChange(center);
     }
     
     private resizeGrid() {
@@ -166,15 +178,17 @@ export class MapRenderer extends EventTarget {
     fpses = [] as number[];
 
     private resizeCanvas() {
-        const w = this.canvas.clientWidth;
-        const h = this.canvas.clientHeight;
-        this.canvas.width = w * window.devicePixelRatio;
-        this.canvas.height = h * window.devicePixelRatio;
-        this.requestRender();
+        this.width = this.canvas.clientWidth;
+        this.height = this.canvas.clientHeight;
+        this.canvas.width = this.width * window.devicePixelRatio;
+        this.canvas.height = this.height * window.devicePixelRatio;
+        this.update();
     }
     private lastTime = NaN;
 
     private renderCanvas(time: number) {
+        this.frameId = null;
+        this.resizeGrid();
         const ctx = this.canvas.getContext("2d");
 
         if (ctx === null) {
@@ -183,8 +197,6 @@ export class MapRenderer extends EventTarget {
 
         ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-        this.width = this.canvas.width / window.devicePixelRatio;
-        this.height = this.canvas.height / window.devicePixelRatio;
 
         this.renderMap(ctx, time - this.lastTime);
 
@@ -193,7 +205,8 @@ export class MapRenderer extends EventTarget {
     }
 
     requestRender() {
-        this.resizeGrid();
-        requestAnimationFrame(this.renderCanvas.bind(this));
+        if (this.frameId === null) {
+            this.frameId = requestAnimationFrame(this.renderCanvas.bind(this));
+        }
     }
 }

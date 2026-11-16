@@ -11,8 +11,6 @@ export class MapRendererController {
     private panFirstMouse: Vector2 = vec2(0, 0);
     private panFirstPan: Vector2 = vec2(0, 0);
 
-    onPositionChange?: () => void;
-    
     constructor(
         canvas: HTMLCanvasElement,
         state: MapRendererModel,
