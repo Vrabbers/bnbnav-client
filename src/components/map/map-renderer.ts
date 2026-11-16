@@ -1,5 +1,5 @@
-import type { MapService } from "../map-data/map-service.ts";
-import { modulo } from "../math/math-helpers.ts";
+import type { MapService } from "../../map-service/map-service.ts";
+import { modulo } from "../../math/math-helpers.ts";
 import {
     vec2,
     vec2Ceil,
@@ -8,7 +8,7 @@ import {
     vec2Mul,
     vec2Sub,
     vec2ToString,
-} from "../math/vector2.ts";
+} from "../../math/vector2.ts";
 import { MapRendererController } from "./map-renderer-controller.ts";
 import { MapRendererModel } from "./map-renderer-model.ts";
 import { RenderBin } from "./render-bin.ts";

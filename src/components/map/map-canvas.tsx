@@ -1,4 +1,4 @@
-import { MapServiceContext } from "../map-data/map-service-context.ts";
+import { MapServiceContext } from "../../map-service/map-service-context.ts";
 import { MapRenderer } from "./map-renderer.ts";
 import { useContext, useEffect, useRef } from "preact/hooks";
 import "./map.css";

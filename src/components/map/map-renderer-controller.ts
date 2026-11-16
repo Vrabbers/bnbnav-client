@@ -1,5 +1,5 @@
-import { type Vector2, vec2 } from "../math/vector2";
-import * as vector2 from "../math/vector2";
+import { type Vector2, vec2 } from "../../math/vector2";
+import * as vector2 from "../../math/vector2";
 import type { MapRendererModel } from "./map-renderer-model";
 
 export class MapRendererController {

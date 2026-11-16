@@ -1,9 +1,9 @@
-import type { MapService } from "../map-data/map-service";
-import { clamp } from "../math/math-helpers";
-import * as matrix3x2 from "../math/matrix3x2";
-import { type Matrix3x2 } from "../math/matrix3x2";
-import { vec2, type Vector2 } from "../math/vector2";
-import * as vector2 from "../math/vector2";
+import type { MapService } from "../../map-service/map-service";
+import { clamp } from "../../math/math-helpers";
+import * as matrix3x2 from "../../math/matrix3x2";
+import { type Matrix3x2 } from "../../math/matrix3x2";
+import { vec2, type Vector2 } from "../../math/vector2";
+import * as vector2 from "../../math/vector2";
 
 export class MapRendererModel {
     pan: Vector2 = vec2(0, 0);

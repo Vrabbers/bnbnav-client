@@ -1,5 +1,5 @@
-import type { MapService } from "../map-data/map-service";
-import { rect, rectExpand } from "../math/rectangle";
+import type { MapService } from "../../map-service/map-service";
+import { rect, rectExpand } from "../../math/rectangle";
 import { BASE_GRID_SIDE_LENGTH } from "./map-renderer";
 
 export class RenderBin {

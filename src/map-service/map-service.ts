@@ -63,9 +63,15 @@ export class MapService {
 
     static async connect(
         setErrorCallback: (e: unknown) => void,
+        setConnectionStateCallback: (
+            m: "CONNECTING" | "DOWNLOADING" | "WORKING",
+        ) => void,
     ): Promise<MapService> {
+        setConnectionStateCallback("CONNECTING");
         const ws = new WebSocket(WS_URL);
-        ws.addEventListener("message", () => { console.log("ws msg") });
+        ws.addEventListener("message", (m) => {
+            console.log(m);
+        });
         return new Promise((resolve, reject) => {
             ws.addEventListener("error", (a) => {
                 console.error(a);
@@ -75,14 +81,16 @@ export class MapService {
 
             ws.addEventListener("open", () => {
                 console.log("WS connected");
-                resolve(
-                    (async () => {
-                        const req = await fetch(DATA_URL);
-                        const json = (await req.json()) as JsonMapData;
-                        console.log("JSON downloaded");
-                        return new MapService(json, ws);
-                    })(),
-                );
+                setConnectionStateCallback("DOWNLOADING");
+                fetch(DATA_URL)
+                    .then((req) => req.json())
+                    .then((json) => {
+                        setConnectionStateCallback("WORKING");
+                        setTimeout(() => {
+                            resolve(new MapService(json as JsonMapData, ws));
+                        }, 0);
+                    })
+                    .catch(reject);
             });
         });
     }
