@@ -1,6 +1,6 @@
 import { type Vector2, vec2 } from "./vector2";
 
-// Represents a tranformation matrix, as those token by
+// Represents a tranformation matrix, as those taken by
 // e.g. the CanvasRenderingContext2D>>transform function (use ... operator)
 // (which is why they appear weirdly transposed)
 export type Matrix3x2 = [

@@ -1,0 +1,7 @@
+{
+    "LOADING_CONNECTING": "Connecting to bnbnav...",
+    "LOADING_DOWNLOADING": "Downloading map data...",
+    "LOADING_WORKING": "Building map...",
+    "PAGE_ERROR": "An error has occured.",
+    "PAGE_RELOAD": "Reload"
+}

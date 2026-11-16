@@ -69,9 +69,7 @@ export class MapService {
     ): Promise<MapService> {
         setConnectionStateCallback("CONNECTING");
         const ws = new WebSocket(WS_URL);
-        ws.addEventListener("message", (m) => {
-            console.log(m);
-        });
+        ws.addEventListener("message", () => {});
         return new Promise((resolve, reject) => {
             ws.addEventListener("error", (a) => {
                 console.error(a);
