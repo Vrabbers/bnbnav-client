@@ -1,9 +1,6 @@
-import { createContext } from "preact";
 import { rect, rectNormalize } from "../math/rectangle";
 import type { JsonMapData } from "./map-json-data";
 import { MapTree } from "./map-tree";
-
-export const MapServiceContext = createContext<MapService>(undefined!);
 
 export type MapNodeId = string;
 export type EdgeId = string;
@@ -68,7 +65,7 @@ export class MapService {
         setErrorCallback: (e: unknown) => void,
     ): Promise<MapService> {
         const ws = new WebSocket(WS_URL);
-        ws.addEventListener("message", () => {});
+        ws.addEventListener("message", () => { console.log("ws msg") });
         return new Promise((resolve, reject) => {
             ws.addEventListener("error", (a) => {
                 console.error(a);

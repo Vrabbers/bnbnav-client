@@ -18,10 +18,11 @@ export const BASE_GRID_SIDE_LENGTH = 512;
 export class MapRenderer {
     private readonly state: MapRendererModel;
     private readonly controller: MapRendererController;
-    private canvas: HTMLCanvasElement;
+    private readonly canvas: HTMLCanvasElement;
+    
     private width: number;
     private height: number;
-    private resObv: ResizeObserver;
+    private canvasResizeObserver: ResizeObserver;
     private grid: (RenderBin | null)[][] = [];
     private gridSideLength = BASE_GRID_SIDE_LENGTH;
     private gridWidth = 0;
@@ -38,15 +39,13 @@ export class MapRenderer {
             this.requestRender.bind(this),
         );
         this.controller.connect();
-        this.resObv = new ResizeObserver(this.resizeCanvas.bind(this));
-        this.resObv.observe(this.canvas);
+        this.canvasResizeObserver = new ResizeObserver(this.resizeCanvas.bind(this));
+        this.canvasResizeObserver.observe(this.canvas);
     }
 
-    setCanvas(canvas: HTMLCanvasElement) {
-        this.resObv.disconnect();
-        this.canvas = canvas;
-        this.resObv.observe(this.canvas);
-        this.resizeCanvas();
+    dispose() {
+        this.canvasResizeObserver.disconnect();
+        this.controller.dispose();
     }
 
     private resizeGrid() {
@@ -165,6 +164,7 @@ export class MapRenderer {
         this.requestRender();
     }
     private lastTime = NaN;
+    
     private renderCanvas(time: number) {
         const ctx = this.canvas.getContext("2d");
 

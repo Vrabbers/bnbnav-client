@@ -1,7 +1,7 @@
 import { useEffect, useState } from "preact/hooks";
 import { MapService } from "./map-data/map-service.ts";
 import { Map } from "./map-renderer/map.tsx";
-import { MapServiceContext } from "./map-data/map-service.ts";
+import { MapServiceContext } from "./map-data/map-service-context.ts";
 import "./app.css";
 import logo from "./assets/logo.svg";
 import { Toolbar } from "./toolbar.tsx";

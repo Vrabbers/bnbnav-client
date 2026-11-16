@@ -6,6 +6,7 @@ export class MapRendererController {
     private readonly canvas: HTMLCanvasElement;
     private readonly model: MapRendererModel;
     private readonly update: () => void;
+    private readonly abortController: AbortController;
 
     private panning = false;
     private panFirstMouse: Vector2 = vec2(0, 0);
@@ -19,18 +20,25 @@ export class MapRendererController {
         this.canvas = canvas;
         this.model = state;
         this.update = update;
+        this.abortController = new AbortController();
     }
 
     connect() {
-        this.canvas.addEventListener("mousedown", this.mouseDown.bind(this));
-        this.canvas.addEventListener("mouseup", this.mouseUp.bind(this));
-        this.canvas.addEventListener("mousemove", this.mouseMove.bind(this));
-        this.canvas.addEventListener("mouseout", this.mouseUp.bind(this));
+        const signal = this.abortController.signal;
+        this.canvas.addEventListener("mousedown", this.mouseDown.bind(this), { signal });
+        this.canvas.addEventListener("mouseup", this.mouseUp.bind(this), { signal });
+        this.canvas.addEventListener("mousemove", this.mouseMove.bind(this), { signal });
+        this.canvas.addEventListener("mouseout", this.mouseUp.bind(this), { signal });
         this.canvas.addEventListener("wheel", this.wheel.bind(this), {
             passive: false,
+            signal
         });
     }
 
+    dispose() {
+        this.abortController.abort();
+    }
+    
     private mouseDown(evt: MouseEvent) {
         if (evt.button === 0) {
             this.panning = true;
@@ -69,5 +77,5 @@ export class MapRendererController {
         this.model.zoomAt(mousePos, newScale);
 
         this.update();
-    }
+    }   
 }
