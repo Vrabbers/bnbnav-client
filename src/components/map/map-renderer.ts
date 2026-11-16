@@ -15,11 +15,12 @@ import { RenderBin } from "./render-bin.ts";
 
 export const BASE_GRID_SIDE_LENGTH = 512;
 
-export class MapRenderer {
+export class MapRenderer extends EventTarget {
     private readonly state: MapRendererModel;
     private readonly controller: MapRendererController;
     private readonly canvas: HTMLCanvasElement;
-    
+    private readonly abortController: AbortController;
+
     private width: number;
     private height: number;
     private canvasResizeObserver: ResizeObserver;
@@ -29,6 +30,8 @@ export class MapRenderer {
     private gridHeight = 0;
 
     constructor(canvas: HTMLCanvasElement, mapService: MapService) {
+        super();
+        this.abortController = new AbortController();
         this.canvas = canvas;
         this.width = canvas.clientWidth;
         this.height = canvas.clientHeight;
@@ -36,18 +39,24 @@ export class MapRenderer {
         this.controller = new MapRendererController(
             canvas,
             this.state,
-            this.requestRender.bind(this),
+            this.update.bind(this),
         );
-        this.controller.connect();
+        this.controller.connect(this.abortController.signal);
         this.canvasResizeObserver = new ResizeObserver(this.resizeCanvas.bind(this));
         this.canvasResizeObserver.observe(this.canvas);
     }
 
     dispose() {
         this.canvasResizeObserver.disconnect();
-        this.controller.dispose();
+        this.abortController.abort();
     }
 
+    private update() {
+        const center = this.state.toWorld(vec2(this.width / 2, this.height / 2));
+        this.requestRender();
+        this.dispatchEvent(new CustomEvent("position-changed", { detail: center }));
+    }
+    
     private resizeGrid() {
         const log2Scale = Math.ceil(Math.log2(this.state.scale));
         const newSideLength = BASE_GRID_SIDE_LENGTH * 2 ** -log2Scale;
@@ -164,7 +173,7 @@ export class MapRenderer {
         this.requestRender();
     }
     private lastTime = NaN;
-    
+
     private renderCanvas(time: number) {
         const ctx = this.canvas.getContext("2d");
 

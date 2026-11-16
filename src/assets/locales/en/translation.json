@@ -3,5 +3,6 @@
     "LOADING_DOWNLOADING": "Downloading map data...",
     "LOADING_WORKING": "Building map...",
     "PAGE_ERROR": "An error has occured.",
-    "PAGE_RELOAD": "Reload"
+    "PAGE_RELOAD": "Reload",
+    "COORDINATES": "x: {{x}}; z: {{z}}"
 }

@@ -1,6 +1,10 @@
+import type { Signal } from "@preact/signals";
 import { useRef, useState } from "preact/hooks";
+import type { Vector2 } from "../math/vector2";
+import { useTranslation } from "react-i18next";
 
-export function Toolbar() {
+export function Toolbar({ position }: { position: Signal<Vector2> }) {
+    const { t } = useTranslation();
     const [st, setSt] = useState(-100);
     const dialogRef = useRef<HTMLDialogElement>(null);
 
@@ -16,6 +20,14 @@ export function Toolbar() {
             >
                 {st}
             </button>
+
+            <p>
+                {t("COORDINATES", {
+                    x: position.value.x,
+                    z: position.value.y,
+                })}
+            </p>
+
             <dialog ref={dialogRef}>
                 <div>Ich bin ein berliner!</div>
                 <button

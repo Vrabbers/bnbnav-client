@@ -1,11 +1,10 @@
 import { useEffect, useErrorBoundary, useState } from "preact/hooks";
 import { MapService } from "./map-service/map-service.ts";
-import { Map } from "./components/map/map.tsx";
 import { MapServiceContext } from "./map-service/map-service-context.ts";
 import "./app.css";
 import logo from "./assets/logo.svg";
-import { Toolbar } from "./components/toolbar.tsx";
 import { useTranslation } from "react-i18next";
+import MapScreen from "./map-screen.tsx";
 
 export default function App() {
     const { t } = useTranslation();
@@ -46,10 +45,7 @@ export default function App() {
     } else if (mapService !== null) {
         return (
             <MapServiceContext value={mapService}>
-                <div class="app">
-                    <Map />
-                    <Toolbar />
-                </div>
+                <MapScreen />
             </MapServiceContext>
         );
     } else {

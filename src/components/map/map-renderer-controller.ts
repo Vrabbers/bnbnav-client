@@ -6,12 +6,13 @@ export class MapRendererController {
     private readonly canvas: HTMLCanvasElement;
     private readonly model: MapRendererModel;
     private readonly update: () => void;
-    private readonly abortController: AbortController;
 
     private panning = false;
     private panFirstMouse: Vector2 = vec2(0, 0);
     private panFirstPan: Vector2 = vec2(0, 0);
 
+    onPositionChange?: () => void;
+    
     constructor(
         canvas: HTMLCanvasElement,
         state: MapRendererModel,
@@ -20,11 +21,9 @@ export class MapRendererController {
         this.canvas = canvas;
         this.model = state;
         this.update = update;
-        this.abortController = new AbortController();
     }
 
-    connect() {
-        const signal = this.abortController.signal;
+    connect(signal: AbortSignal) {
         this.canvas.addEventListener("mousedown", this.mouseDown.bind(this), { signal });
         this.canvas.addEventListener("mouseup", this.mouseUp.bind(this), { signal });
         this.canvas.addEventListener("mousemove", this.mouseMove.bind(this), { signal });
@@ -33,10 +32,6 @@ export class MapRendererController {
             passive: false,
             signal
         });
-    }
-
-    dispose() {
-        this.abortController.abort();
     }
     
     private mouseDown(evt: MouseEvent) {
@@ -75,7 +70,6 @@ export class MapRendererController {
         const newScale = this.model.scale + zoomFactor;
 
         this.model.zoomAt(mousePos, newScale);
-
         this.update();
     }   
 }
